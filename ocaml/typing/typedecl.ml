@@ -71,9 +71,17 @@ type error =
       ; err : Layout.Violation.t
       }
   | Layout_empty_record
+<<<<<<< HEAD
   | Non_value_in_sig of Layout.Violation.t * string
   | Float64_in_block of type_expr * layout_sort_loc
   | Mixed_block
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+  | Non_value_in_sig of Layout.Violation.t * string
+  | Float64_in_block of type_expr
+=======
+  | Non_value_in_sig of Layout.Violation.t * string * type_expr
+  | Float64_in_block of type_expr
+>>>>>>> e17ba64a (Enable layout histories (#1823))
   | Separability of Typedecl_separability.error
   | Bad_unboxed_attribute of string
   | Boxed_and_unboxed
@@ -1206,6 +1214,20 @@ let update_decl_layout env dpath decl =
     end;
   new_decl
 
+let update_decls_layout_reason decls =
+  List.map
+    (fun (id, decl) ->
+       let reason = Layout.(Generalized (Some id, decl.type_loc)) in
+       let update_generalized ty = Ctype.update_generalized_ty_layout_reason ty reason in
+       List.iter update_generalized decl.type_params;
+       Btype.iter_type_expr_kind update_generalized decl.type_kind;
+       Option.iter update_generalized decl.type_manifest;
+       let new_decl = {decl with type_layout =
+                                   Layout.(update_reason decl.type_layout reason)} in
+       (id, new_decl)
+    )
+    decls
+
 let update_decls_layout env decls =
   List.map
     (fun (id, decl) -> (id, update_decl_layout env (Pident id) decl))
@@ -1572,6 +1594,7 @@ let transl_type_decl env rec_flag sdecl_list =
       |> Typedecl_variance.update_decls env sdecl_list
       |> Typedecl_separability.update_decls env
       |> update_decls_layout new_env
+      |> update_decls_layout_reason
     with
     | Typedecl_variance.Error (loc, err) ->
         raise (Error (loc, Variance err))
@@ -2060,7 +2083,7 @@ let transl_value_decl env loc valdecl =
                 (Layout.value ~why:Structure_element) with
   | Ok () -> ()
   | Error err ->
-    raise(Error(cty.ctyp_loc, Non_value_in_sig(err, valdecl.pval_name.txt)))
+    raise(Error(cty.ctyp_loc, Non_value_in_sig(err,valdecl.pval_name.txt,cty.ctyp_type)))
   end;
   let ty = cty.ctyp_type in
   let v =
@@ -2105,6 +2128,8 @@ let transl_value_decl env loc valdecl =
     Env.enter_value valdecl.pval_name.txt v env
       ~check:(fun s -> Warnings.Unused_value_declaration s)
   in
+  let reason = Layout.Generalized (Some id, loc) in
+  Ctype.update_generalized_ty_layout_reason ty reason;
   let desc =
     {
      val_id = id;
@@ -2581,10 +2606,10 @@ let report_error ppf = function
   | Layout_mismatch_of_path (dpath,v) ->
     (* the type is always printed just above, so print out just the head of the
        path instead of something like [t/3] *)
-    let offender ppf = fprintf ppf "Type %s" (Ident.name (Path.head dpath)) in
+    let offender ppf = fprintf ppf "type %s" (Ident.name (Path.head dpath)) in
     Layout.Violation.report_with_offender ~offender ppf v
   | Layout_mismatch_of_type (ty,v) ->
-    let offender ppf = fprintf ppf "Type %a" Printtyp.type_expr ty in
+    let offender ppf = fprintf ppf "type %a" Printtyp.type_expr ty in
     Layout.Violation.report_with_offender ~offender ppf v
   | Layout_sort {lloc; typ; err} ->
     let s =
@@ -2593,11 +2618,12 @@ let report_error ppf = function
       | Record -> "Record element"
       | External -> "External"
     in
-    fprintf ppf "@[%s types must have a representable layout.@ \ %a@]" s
+    fprintf ppf "@[%s types must have a representable layout.@ %a@]" s
       (Layout.Violation.report_with_offender
          ~offender:(fun ppf -> Printtyp.type_expr ppf typ)) err
   | Layout_empty_record ->
     fprintf ppf "@[Records must contain at least one runtime value.@]"
+<<<<<<< HEAD
   | Non_value_in_sig (err, val_name) ->
     fprintf ppf "@[This type signature for %s is not a value type.@ %a@]"
       val_name (Layout.Violation.report_with_name ~name:val_name) err
@@ -2610,6 +2636,18 @@ let report_error ppf = function
            get rejected with the [Mixed_block] error instead. *)
       | External -> assert false
     in
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+  | Non_value_in_sig (err, val_name) ->
+    fprintf ppf "@[This type signature for %s is not a value type.@ %a@]"
+      val_name (Layout.Violation.report_with_name ~name:val_name) err
+  | Float64_in_block typ ->
+=======
+  | Non_value_in_sig (err, val_name, ty) ->
+    let offender ppf = fprintf ppf "type %a" Printtyp.type_expr ty in
+    fprintf ppf "@[This type for %s is not a value type.@ %a@]"
+      val_name (Layout.Violation.report_with_offender ~offender) err
+  | Float64_in_block typ ->
+>>>>>>> e17ba64a (Enable layout histories (#1823))
     fprintf ppf
       "@[Type %a has layout float64.@ %s may not yet contain types of this layout.@]"
       Printtyp.type_expr typ struct_desc

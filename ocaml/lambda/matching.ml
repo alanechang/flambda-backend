@@ -4022,12 +4022,18 @@ let report_error ppf = function
       fprintf ppf
         "Non-value detected in translation:@ Please report this error to \
          the Jane Street compilers team.@ %a"
+<<<<<<< HEAD
         (Layout.Violation.report_with_name ~name:"This expression") err
   | Illegal_record_field c ->
       fprintf ppf
         "Sort %s detected where value was expected in a record field:@ Please \
          report this error to the Jane Street compilers team."
         (Layout.string_of_const c)
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+        (Layout.Violation.report_with_name ~name:"This expression") err
+=======
+        (Layout.Violation.report_with_name ~name:"this expression") err
+>>>>>>> e17ba64a (Enable layout histories (#1823))
 
 let () =
   Location.register_error_of_exn

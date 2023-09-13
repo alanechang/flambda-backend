@@ -520,8 +520,35 @@ val check_type_layout :
 val constrain_type_layout :
   Env.t -> type_expr -> layout -> (unit, Layout.Violation.t) result
 
+<<<<<<< HEAD
 (* False if running in principal mode and the type is not principal.
    True otherwise. *)
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+=======
+(* Update the layout reason of all generalized type vars inside the given [type_expr]
+
+   Consider some code like
+
+    {[
+      let f : ('a : immediate). 'a -> 'a = fun x -> x in
+      let y = f "hello" in ...
+    ]}
+
+   This should be rejected, because a string is not immediate. But how should
+   we explain how the requirement to pass an immediate arises? We could point
+   the user to the [: immediate] annotation within the definition for [f]. But this
+   definition might be arbitrarily far away (including in another file), and the inference
+   to produce the fact that the type it works on must be immediate might be complex.
+
+   The design decision here is not to look within well-typed definitions for further
+   information about how layout decisions arose. Other tooling -- such as merlin --
+   is more well suited for discovering properties of well-typed definitions. Instead,
+   once a definition is done being type-checked -- that is, once it is generalized --
+   we update the histories of all of its types' layouts to just refer to the definition
+   itself. *)
+val update_generalized_ty_layout_reason : type_expr -> Layout.creation_reason -> unit
+
+>>>>>>> e17ba64a (Enable layout histories (#1823))
 val is_principal : type_expr -> bool
 
 (* True if a type is immediate. *)

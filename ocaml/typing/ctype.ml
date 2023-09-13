@@ -2034,13 +2034,13 @@ let rec constrain_type_layout ~fixed env ty layout fuel =
       match Layout.sub layout_bound layout with
       | Ok () as ok -> ok
       | Error _ as err when fuel < 0 -> err
-      | Error violation ->
+      | Error _ ->
         begin match unbox_once env ty with
         | Not_unboxed ty -> constrain_unboxed ty
         | Unboxed ty ->
             constrain_type_layout ~fixed env ty layout (fuel - 1)
         | Missing missing_cmi_for ->
-          Error (Layout.Violation.record_missing_cmi ~missing_cmi_for violation)
+          Error Layout.(Violation.of_ ~missing_cmi:missing_cmi_for (Not_a_sublayout (update_reason layout_bound (Missing_cmi missing_cmi_for), layout)))
         end
     end
   | Tpoly (ty, _) -> constrain_type_layout ~fixed env ty layout fuel
@@ -2113,6 +2113,25 @@ let unification_layout_check env ty layout =
   | Perform_checks -> constrain_type_layout_exn env Unify ty layout
   | Delay_checks r -> r := (ty,layout) :: !r
   | Skip_checks -> ()
+
+let update_generalized_ty_layout_reason ty reason =
+  let rec inner ty =
+    let level = get_level ty in
+    if level = generic_level && try_mark_node ty then begin
+      begin match get_desc ty with
+      | Tvar ({ layout; _ } as r) ->
+        let new_layout = Layout.(update_reason layout reason) in
+        set_type_desc ty (Tvar {r with layout = new_layout})
+      | Tunivar ({ layout; _ } as r) ->
+        let new_layout = Layout.(update_reason layout reason) in
+        set_type_desc ty (Tunivar {r with layout = new_layout})
+      | _ -> ()
+      end;
+      iter_type_expr inner ty
+    end
+  in
+  inner ty;
+  unmark_type ty
 
 let is_principal ty =
   not !Clflags.principal || get_level ty = generic_level
@@ -3833,7 +3852,7 @@ let filter_arrow env t l ~force_tpoly =
               (* CR layouts v5: Change the Layout.value when option can
                  hold non-values. *)
               (Tconstr(Predef.path_option,
-                       [newvar2 level (Layout.value ~why:Type_argument)],
+                       [newvar2 level Predef.option_argument_layout],
                        ref Mnil))
           else
             newvar2 level l_arg

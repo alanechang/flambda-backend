@@ -45,6 +45,7 @@ type type_forcing_context =
   | Comprehension_for_start
   | Comprehension_for_stop
   | Comprehension_when
+  | Error_message_attr of string
 
 type type_expected = {
   ty: type_expr;
@@ -1516,8 +1517,10 @@ let build_or_pat env loc lid =
   (* CR layouts: the use of value here is wrong:
      there could be other layouts in a polymorphic variant argument;
      see Test 24 in tests/typing-layouts/basics_alpha.ml *)
-  let tyl = List.map (fun _ -> newvar (Layout.value ~why:Type_argument))
-              decl.type_params in
+  let arity = List.length decl.type_params in
+  let tyl = List.mapi (fun i _ ->
+    newvar (Layout.value ~why:(Type_argument {parent_path = path; position = i+1; arity}))
+  ) decl.type_params in
   let row0 =
     let ty = expand_head env (newty(Tconstr(path, tyl, ref Mnil))) in
     match get_desc ty with
@@ -3008,7 +3011,7 @@ let type_class_arg_pattern cl_num val_env met_env l spat =
   if !Clflags.principal then Ctype.begin_def ();
   let tps = create_type_pat_state Modules_rejected in
   (* CR layouts: will change when we relax layout restrictions in classes. *)
-  let nv = newvar (Layout.value ~why:Class_argument) in
+  let nv = newvar (Layout.value ~why:Class_term_argument) in
   let alloc_mode = simple_pat_mode Value.legacy in
   let pat =
     type_pat tps Value ~no_existentials:In_class_args ~alloc_mode
@@ -3021,7 +3024,8 @@ let type_class_arg_pattern cl_num val_env met_env l spat =
   (* CR layouts v5: value restriction here to be relaxed *)
   if is_optional l then
     unify_pat (ref val_env) pat
-      (type_option (newvar (Layout.value ~why:Type_argument)));
+      (type_option
+         (newvar Predef.option_argument_layout));
   let pvs = tps.tps_pattern_variables in
   if !Clflags.principal then begin
     Ctype.end_def ();
@@ -3799,7 +3803,8 @@ let rec approx_type env sty =
   match sty.ptyp_desc with
   | Ptyp_arrow (p, ({ ptyp_desc = Ptyp_poly _ } as arg_sty), sty) ->
       (* CR layouts v5: value requirement here to be relaxed *)
-      if is_optional p then newvar (Layout.value ~why:Type_argument)
+      if is_optional p
+      then newvar Predef.option_argument_layout
       else begin
         let arg_mode = Typetexp.get_alloc_mode arg_sty in
         let arg_ty =
@@ -3817,7 +3822,8 @@ let rec approx_type env sty =
       let arg_mode = Typetexp.get_alloc_mode arg_sty in
       let arg =
         if is_optional p
-        then type_option (newvar (Layout.value ~why:Type_argument))
+        then type_option
+               (newvar Predef.option_argument_layout)
         else newvar (Layout.of_new_sort_var ~why:Function_argument)
       in
       let ret = approx_type env sty in
@@ -5374,7 +5380,11 @@ and type_expect_
       end_def ();
       generalize_structure ty;
       let ty' = instance ty in
-      let arg = type_argument env expected_mode sarg ty (instance ty) in
+      let error_message_attr_opt =
+        Builtin_attributes.error_message_attr sexp.pexp_attributes in
+      let explanation = Option.map (fun msg -> Error_message_attr msg)
+                          error_message_attr_opt in
+      let arg = type_argument ?explanation env expected_mode sarg ty (instance ty) in
       rue {
         exp_desc = arg.exp_desc;
         exp_loc = arg.exp_loc;
@@ -6817,7 +6827,8 @@ and type_apply_arg env ~app_loc ~funct ~index ~position ~partial_app (lbl, arg) 
       if is_optional lbl then
         (* CR layouts v5: relax value requirement *)
         unify_exp env arg
-          (type_option(newvar (Layout.value ~why:Type_argument)));
+          (type_option
+             (newvar Predef.option_argument_layout));
       (lbl, Arg (arg, expected_mode.mode, sort_arg))
   | Arg (Known_arg { sarg; ty_arg; ty_arg0;
                      mode_arg; wrapped_in_some; sort_arg }) ->
@@ -7655,6 +7666,12 @@ and type_let
          lower_contravariant env pat.pat_type)
     pat_list exp_list;
   iter_pattern_variables_type generalize pvs;
+  (* update pattern variable layout reasons *)
+  List.iter
+    (fun pv ->
+      let reason = Layout.Generalized (Some pv.pv_id, pv.pv_loc) in
+      Ctype.update_generalized_ty_layout_reason pv.pv_type reason)
+    pvs;
   List.iter2
     (fun (_,_,expected_ty) (exp, vars) ->
        match vars with
@@ -7674,6 +7691,16 @@ and type_let
              lower_contravariant env exp.exp_type;
            generalize_and_check_univars env "definition" exp expected_ty vars)
     pat_list exp_list;
+  let update_exp_layout (_, p, _) (exp, _) =
+    let pat_name =
+      match p.pat_desc with
+        Tpat_var (id, _, _) -> Some id
+      | Tpat_alias(_, id, _, _) -> Some id
+      | _ -> None in
+    let reason = Layout.Generalized (pat_name, exp.exp_loc) in
+    Ctype.update_generalized_ty_layout_reason exp.exp_type reason
+  in
+  List.iter2 update_exp_layout pat_list exp_list;
   let l = List.combine pat_list exp_list in
   let l = List.combine sorts l in
   let l =
@@ -7996,14 +8023,14 @@ and type_comprehension_expr
      - [{body = sbody; clauses}]:
          The actual comprehension to be translated. *)
   let comprehension_type, container_type, make_texp,
-      {body = sbody; clauses}, reason =
+      {body = sbody; clauses}, layout =
     match cexpr with
     | Cexp_list_comprehension comp ->
         List_comprehension,
         Predef.type_list,
         (fun tcomp -> Texp_list_comprehension tcomp),
         comp,
-        Layout.Type_argument
+        Predef.list_argument_layout
     | Cexp_array_comprehension (amut, comp) ->
         let container_type = match amut with
           | Mutable   -> Predef.type_array
@@ -8013,13 +8040,13 @@ and type_comprehension_expr
         container_type,
         (fun tcomp -> Texp_array_comprehension (amut, tcomp)),
         comp,
-        Layout.Array_element
+        (* CR layouts v4: When this changes from [value], you will also have to
+           update the use of [transl_exp] in transl_array_comprehension.ml. See
+           a companion CR layouts v4 at the point of interest in that file. *)
+        Layout.value ~why:Layout.Array_element
   in
   if !Clflags.principal then begin_def ();
-  (* CR layouts v4: When this changes from [value], you will also have to
-     update the use of [transl_exp] in transl_array_comprehension.ml. See
-     a companion CR layouts v4 at the point of interest in that file. *)
-  let element_ty = newvar (Layout.value ~why:reason) in
+  let element_ty = newvar layout in
   unify_exp_types
     loc
     env
@@ -8364,6 +8391,8 @@ let report_type_expected_explanation expl ppf =
       because "a range-based for iterator stop index in a comprehension"
   | Comprehension_when ->
       because "a when-clause in a comprehension"
+  | Error_message_attr msg ->
+      fprintf ppf "@\n@[%s@]" msg
 
 let escaping_hint failure_reason submode_reason
       (context : Env.closure_context option) =
@@ -8616,8 +8645,8 @@ let report_error ~loc env = function
     ) ()
   | Not_a_value (err, explanation) ->
     Location.error_of_printer ~loc (fun ppf () ->
-      fprintf ppf "Methods must have layout value.@ %a"
-        (Layout.Violation.report_with_name ~name:"This expression")
+      fprintf ppf "Object types must have layout value.@ %a"
+        (Layout.Violation.report_with_name ~name:"the type of this expression")
         err;
       report_type_expected_explanation_opt explanation ppf)
       ()

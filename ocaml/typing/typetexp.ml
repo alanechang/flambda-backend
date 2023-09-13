@@ -465,10 +465,11 @@ let transl_type_param env path styp =
    to ask for it with an annotation.  Some restriction here seems necessary
    for backwards compatibility (e.g., we wouldn't want [type 'a id = 'a] to
    have layout any).  But it might be possible to infer any in some cases. *)
-  let layout = Layout.of_new_sort_var ~why:Unannotated_type_parameter in
   let attrs = styp.ptyp_attributes in
+  let layout = Layout.of_new_sort_var ~why:(Unannotated_type_parameter path) in
   match styp.ptyp_desc with
-    Ptyp_any -> transl_type_param_var env loc attrs None layout None
+  | Ptyp_any ->
+    transl_type_param_var env loc attrs None layout None
   | Ptyp_var name ->
     transl_type_param_var env loc attrs (Some name) layout None
   | _ -> assert false
@@ -481,7 +482,7 @@ let transl_type_param env path styp =
 
 let get_type_param_layout path styp =
   match Jane_syntax.Core_type.of_ast styp with
-  | None -> Layout.of_new_sort_var ~why:Unannotated_type_parameter
+  | None -> Layout.of_new_sort_var ~why:(Unannotated_type_parameter path)
   | Some (Jtyp_layout (Ltyp_var { name; layout }), _attrs) ->
     Layout.of_annotation ~context:(Type_parameter (path, name)) layout
   | Some _ -> Misc.fatal_error "non-type-variable in get_type_param_layout"
@@ -541,6 +542,14 @@ let check_arg_type styp =
     | _ -> ()
   end
 
+let enrich_with_attributes attrs annotation_context =
+  match Builtin_attributes.error_message_attr attrs with
+  | Some msg -> Layout.With_error_message (msg, annotation_context)
+  | None -> annotation_context
+
+let layout_of_annotation annotation_context attrs layout =
+  Layout.of_annotation ~context:(enrich_with_attributes attrs annotation_context) layout
+
 (* translate the ['a 'b ('c : immediate) .] part of a polytype,
    returning something suitable as the first argument of Ttyp_poly and
    a [poly_univars] *)
@@ -552,7 +561,7 @@ let transl_bound_vars : (_, _) Either.t -> _ =
                       TyVarEnv.make_poly_univars vars_only
   | Right vars_layouts -> List.map mk_pair vars_layouts,
                           TyVarEnv.make_poly_univars_layouts
-                            ~context:(fun v -> Univar v) vars_layouts
+                            ~context:(fun v -> Univar ("'" ^ v)) vars_layouts
 
 let rec transl_type env policy mode styp =
   Builtin_attributes.warning_scope styp.ptyp_attributes
@@ -576,7 +585,7 @@ and transl_type_aux env policy mode styp =
      in
      ctyp (Ttyp_var (None, None)) ty
   | Ptyp_var name ->
-      let desc, typ = transl_type_var env policy styp.ptyp_loc name None in
+      let desc, typ = transl_type_var env policy styp.ptyp_attributes styp.ptyp_loc name None in
       ctyp desc typ
   | Ptyp_arrow _ ->
       let args, ret, ret_mode = extract_params styp in
@@ -675,13 +684,28 @@ and transl_type_aux env policy mode styp =
         | Some ty ->
             if get_level ty = Btype.generic_level then unify_var else unify
       in
-      List.iter2
-        (fun (sty, cty) ty' ->
+      let arity = List.length params in
+      List.iteri
+        (fun idx ((sty, cty), ty') ->
+           begin match Types.get_desc ty' with
+           | Tvar {layout; _} when Layout.has_imported_history layout ->
+             (* In case of a Tvar with imported layout history, we can improve
+                the layout reason using the in scope [path] to the parent type.
+
+                Basic benchmarking suggests this change doesn't have that big
+                of a performance impact: compiling [types.ml] resulted in 13k
+                extra alloc (~0.01% increase) and building the core library had
+                no statistically significant increase in build time. *)
+             let reason = Layout.Imported_type_argument
+                            {parent_path = path; position = idx + 1; arity} in
+             Types.set_var_layout ty' (Layout.update_reason layout reason)
+           | _ -> ()
+           end;
            try unify_param env ty' cty.ctyp_type with Unify err ->
              let err = Errortrace.swap_unification_error err in
              raise (Error(sty.ptyp_loc, env, Type_mismatch err))
         )
-        (List.combine stl args) params;
+        (List.combine (List.combine stl args) params);
       let constr =
         newconstr path (List.map (fun ctyp -> ctyp.ctyp_type) args) in
       ctyp (Ttyp_constr (path, lid, args)) constr
@@ -762,7 +786,7 @@ and transl_type_aux env policy mode styp =
       in
       ctyp (Ttyp_class (path, lid, args)) ty
   | Ptyp_alias(st, alias) ->
-    let desc, typ = transl_type_alias env policy mode loc st (Some alias) None in
+    let desc, typ = transl_type_alias env policy mode styp.ptyp_attributes loc st (Some alias) None in
     ctyp desc typ
   | Ptyp_variant(fields, closed, present) ->
       let name = ref None in
@@ -919,28 +943,28 @@ and transl_type_aux env policy mode styp =
   | Ptyp_extension ext ->
       raise (Error_forward (Builtin_attributes.error_of_extension ext))
 
-and transl_type_aux_jst env policy mode _attrs loc :
+and transl_type_aux_jst env policy mode attrs loc :
       Jane_syntax.Core_type.t -> _ = function
-  | Jtyp_layout typ -> transl_type_aux_jst_layout env policy mode loc typ
+  | Jtyp_layout typ -> transl_type_aux_jst_layout env policy mode attrs loc typ
 
-and transl_type_aux_jst_layout env policy mode loc :
+and transl_type_aux_jst_layout env policy mode attrs loc :
       Jane_syntax.Layouts.core_type -> _ = function
   | Ltyp_var { name = None; layout } ->
-    let tlayout = Layout.of_annotation ~context:(Type_wildcard loc) layout in
+    let tlayout = layout_of_annotation (Type_wildcard loc) attrs layout in
     Ttyp_var (None, Some layout.txt),
     TyVarEnv.new_anon_var loc env tlayout policy
   | Ltyp_var { name = Some name; layout } ->
-    transl_type_var env policy loc name (Some layout)
+    transl_type_var env policy attrs loc name (Some layout)
   | Ltyp_poly { bound_vars; inner_type } ->
     transl_type_poly env policy mode loc (Either.Right bound_vars) inner_type
   | Ltyp_alias { aliased_type; name; layout } ->
-    transl_type_alias env policy mode loc aliased_type name (Some layout)
+    transl_type_alias env policy mode attrs loc aliased_type name (Some layout)
 
-and transl_type_var env policy loc name layout_annot_opt =
+and transl_type_var env policy attrs loc name layout_annot_opt =
   let print_name = "'" ^ name in
   if not (valid_tyvar_name name) then
     raise (Error (loc, env, Invalid_variable_name print_name));
-  let of_annot = Layout.of_annotation ~context:(Type_variable print_name) in
+  let of_annot = layout_of_annotation (Type_variable print_name) attrs in
   let ty = try
       let ty = TyVarEnv.lookup_local name in
       begin match layout_annot_opt with
@@ -979,7 +1003,7 @@ and transl_type_poly env policy mode loc (vars : (_, _) Either.t) st =
   unify_var env (newvar (Layout.any ~why:Dummy_layout)) ty';
   Ttyp_poly (typed_vars, cty), ty'
 
-and transl_type_alias env policy mode alias_loc styp name_opt layout_annot_opt =
+and transl_type_alias env policy mode attrs alias_loc styp name_opt layout_annot_opt =
   let cty = match name_opt with
     | Some alias ->
       begin try
@@ -993,7 +1017,7 @@ and transl_type_alias env policy mode alias_loc styp name_opt layout_annot_opt =
         | None -> ()
         | Some layout_annot ->
           let layout =
-            Layout.of_annotation ~context:(Type_variable alias) layout_annot
+            layout_of_annotation (Type_variable ("'" ^ alias)) attrs layout_annot
           in
           begin match constrain_type_layout env t layout with
           | Ok () -> ()
@@ -1004,11 +1028,10 @@ and transl_type_alias env policy mode alias_loc styp name_opt layout_annot_opt =
         cty
       with Not_found ->
         if !Clflags.principal then begin_def ();
-        let layout =
-          Layout.(of_annotation_option_default
-            ~default:(any ~why:Dummy_layout)
-            ~context:(Type_variable alias)
-            layout_annot_opt)
+        let layout = match layout_annot_opt with
+          | None -> Layout.any ~why:Dummy_layout
+          | Some layout_annot ->
+            layout_of_annotation (Type_variable ("'" ^ alias)) attrs layout_annot
         in
         let t = newvar layout in
         TyVarEnv.remember_used alias t alias_loc;
@@ -1040,8 +1063,7 @@ and transl_type_alias env policy mode alias_loc styp name_opt layout_annot_opt =
         | Some layout_annot -> layout_annot
       in
       let layout =
-          Layout.of_annotation
-            ~context:(Type_wildcard layout_annot.loc) layout_annot
+        layout_of_annotation (Type_wildcard layout_annot.loc) attrs layout_annot
       in
       begin match constrain_type_layout env cty_expr layout with
       | Ok () -> ()
@@ -1336,14 +1358,16 @@ let report_error env ppf = function
       fprintf ppf ".@]";
   | Bad_univar_layout { name; layout_info; inferred_layout } ->
       fprintf ppf
-        "@[<hov>The universal type variable %a was %s to have@ \
-         layout %a, but was inferred to have %t.@]"
+        "@[<hov>The universal type variable %a was %s to have layout %a.@;%a@]"
         Printast.tyvar name
         (if layout_info.defaulted then "defaulted" else "declared")
         Layout.format layout_info.original_layout
-        (fun ppf -> match Layout.get inferred_layout with
-           | Const c -> fprintf ppf "layout %s" (Layout.string_of_const c)
-           | Var _ -> fprintf ppf "a representable layout")
+        (Layout.format_history ~intro:(
+          dprintf "But it was inferred to have %t"
+            (fun ppf -> match Layout.get inferred_layout with
+            | Const c -> fprintf ppf "layout %s" (Layout.string_of_const c)
+            | Var _ -> fprintf ppf "a representable layout")))
+        inferred_layout
   | Multiple_constraints_on_type s ->
       fprintf ppf "Multiple constraints for type %a" longident s
   | Method_mismatch (l, ty, ty') ->
@@ -1373,7 +1397,7 @@ let report_error env ppf = function
       | Package_constraint -> "Signature package constraint"
       | Object_field -> "Object field"
     in
-    fprintf ppf "@[%s types must have layout value.@ \ %a@]"
+    fprintf ppf "@[%s types must have layout value.@ %a@]"
       s (Layout.Violation.report_with_offender
            ~offender:(fun ppf -> Printtyp.type_expr ppf typ)) err
   | Non_sort {vloc; typ; err} ->
@@ -1382,7 +1406,7 @@ let report_error env ppf = function
       | Fun_arg -> "Function argument"
       | Fun_ret -> "Function return"
     in
-    fprintf ppf "@[%s types must have a representable layout.@ \ %a@]"
+    fprintf ppf "@[%s types must have a representable layout.@ %a@]"
       s (Layout.Violation.report_with_offender
            ~offender:(fun ppf -> Printtyp.type_expr ppf typ)) err
   | Bad_layout_annot(ty, violation) ->

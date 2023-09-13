@@ -2604,11 +2604,14 @@ let explanation (type variety) intro prev env
               (Layout.Violation.report_with_offender_sort
                  ~offender:(fun ppf -> type_expr ppf t)) e)
   | Errortrace.Unequal_var_layouts (t1,l1,t2,l2) ->
-      let fmt_history t =
-        Layout.format_history ~intro:(fun ppf -> type_expr ppf t)
+      let fmt_history t l ppf =
+        Layout.(format_history ~intro:(
+          dprintf "The layout of %a is %a" type_expr t format l) ppf l)
       in
-      Some (dprintf "@ because their layouts are different.@[<v>%a%a@]"
-              (fmt_history t1) l1 (fmt_history t2) l2)
+      Some (dprintf "@ because their layouts are different.@ @[<v>%t@;%t@]"
+              (fmt_history t1 l1) (fmt_history t2 l2))
+  | Errortrace.Unequal_var_layouts_with_no_history ->
+      Some (dprintf "@ because their layouts are different.")
 
 let mismatch intro env trace =
   Errortrace.explain trace (fun ~prev h -> explanation intro prev env h)
@@ -2671,7 +2674,8 @@ let error trace_format mode subst env tr txt1 ppf txt2 ty_expect_explanation =
       tr
   in
   let layout_error = match Misc.last tr with
-    | Some (Bad_layout _ | Bad_layout_sort _ | Unequal_var_layouts _) ->
+    | Some (Bad_layout _ | Bad_layout_sort _ | Unequal_var_layouts _
+           | Unequal_var_layouts_with_no_history) ->
         true
     | Some (Diff _ | Escape _ | Variant _ | Obj _ | Incompatible_fields _
            | Rec_occur _)

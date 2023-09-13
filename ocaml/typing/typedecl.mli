@@ -109,9 +109,17 @@ type error =
       ; err : Layout.Violation.t
       }
   | Layout_empty_record
+<<<<<<< HEAD
   | Non_value_in_sig of Layout.Violation.t * string
   | Float64_in_block of type_expr * layout_sort_loc
   | Mixed_block
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+  | Non_value_in_sig of Layout.Violation.t * string
+  | Float64_in_block of type_expr
+=======
+  | Non_value_in_sig of Layout.Violation.t * string * type_expr
+  | Float64_in_block of type_expr
+>>>>>>> e17ba64a (Enable layout histories (#1823))
   | Separability of Typedecl_separability.error
   | Bad_unboxed_attribute of string
   | Boxed_and_unboxed

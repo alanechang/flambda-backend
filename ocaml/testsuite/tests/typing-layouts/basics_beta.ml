@@ -197,7 +197,10 @@ Line 1, characters 19-25:
 1 | let string_id (x : string imm_id) = x;;
                        ^^^^^^
 Error: This type string should be an instance of type ('a : immediate)
-       string has layout value, which is not a sublayout of immediate.
+       The layout of string is value, because
+         it is the primitive value type string.
+       But the layout of string must be a sublayout of immediate, because
+         of the definition of imm_id at line 1, characters 0-33.
 |}];;
 
 let id_for_imms (x : 'a imm_id) = x
@@ -217,7 +220,10 @@ Line 1, characters 33-46:
                                      ^^^^^^^^^^^^^
 Error: This expression has type string but an expression was expected of type
          'a imm_id = ('a : immediate)
-       string has layout value, which is not a sublayout of immediate.
+       The layout of string is value, because
+         it is the primitive value type string.
+       But the layout of string must be a sublayout of immediate, because
+         of the definition of id_for_imms at line 1, characters 16-35.
 |}]
 
 (************************************)
@@ -230,7 +236,10 @@ Line 2, characters 9-15:
 2 | and s4 = string t4;;
              ^^^^^^
 Error: This type string should be an instance of type ('a : immediate)
-       string has layout value, which is not a sublayout of immediate.
+       The layout of string is value, because
+         it is the primitive value type string.
+       But the layout of string must be a sublayout of immediate, because
+         of the annotation on 'a in the declaration of the type t4.
 |}];;
 
 type s4 = string t4
@@ -241,7 +250,10 @@ Line 1, characters 10-16:
 1 | type s4 = string t4
               ^^^^^^
 Error: This type string should be an instance of type ('a : immediate)
-       string has layout value, which is not a sublayout of immediate.
+       The layout of string is value, because
+         it is the primitive value type string.
+       But the layout of string must be a sublayout of immediate, because
+         of the annotation on 'a in the declaration of the type t4.
 |}]
 
 type s4 = int t4
@@ -271,9 +283,11 @@ Line 3, characters 0-15:
 3 | and s5 = string;;
     ^^^^^^^^^^^^^^^
 Error:
-       s5 has layout value, which is not a sublayout of immediate.
+       The layout of s5 is value, because
+         it is the primitive value type string.
+       But the layout of s5 must be a sublayout of immediate, because
+         of the annotation on 'a in the declaration of the type t4.
 |}]
-(* CR layouts v2.9: improve error, which requires layout histories *)
 
 type ('a : any) t4 = 'a
 and s4 = string t4;;
@@ -332,7 +346,10 @@ Line 2, characters 2-32:
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Error: This definition has type 'b -> unit which is less general than
          'a. 'a -> unit
-       'a has layout value, which is not a sublayout of immediate.
+       The layout of 'a is value, because
+         it is or unifies with an unannotated universal variable.
+       But the layout of 'a must be a sublayout of immediate, because
+         of the definition of t6_imm at line 1, characters 0-42.
 |}];;
 
 let o6 = object
@@ -345,7 +362,10 @@ Line 3, characters 4-34:
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Error: This method has type 'b -> unit which is less general than
          'a. 'a -> unit
-       'a has layout value, which is not a sublayout of immediate.
+       The layout of 'a is value, because
+         it is or unifies with an unannotated universal variable.
+       But the layout of 'a must be a sublayout of immediate, because
+         of the definition of t6_imm at line 1, characters 0-42.
 |}];;
 
 (* CR layouts v1.5: add more tests here once you can annotate these types with
@@ -363,7 +383,10 @@ Line 3, characters 12-21:
 3 | type t7' = (int * int) t7;;
                 ^^^^^^^^^
 Error: This type int * int should be an instance of type ('a : immediate)
-       int * int has layout value, which is not a sublayout of immediate.
+       The layout of int * int is value, because
+         it's a tuple type.
+       But the layout of int * int must be a sublayout of immediate, because
+         of the definition of t7 at line 1, characters 0-37.
 |}]
 
 (**********************************************************)
@@ -548,8 +571,19 @@ Error: Signature mismatch:
          val x : ('a : immediate). 'a
        is not included in
          val x : string
+<<<<<<< HEAD
        The type ('a : immediate) is not compatible with the type string
        string has layout value, which is not a sublayout of immediate.
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+       The type string is not compatible with the type string
+       string has layout value, which is not a sublayout of immediate.
+=======
+       The type string is not compatible with the type string
+       The layout of string is value, because
+         it is the primitive value type string.
+       But the layout of string must be a sublayout of immediate, because
+         of the definition of x at line 8, characters 10-26.
+>>>>>>> e17ba64a (Enable layout histories (#1823))
 |}];;
 
 (* This hits the second linktype in moregen (requires expansion to see it's a
@@ -585,9 +619,20 @@ Error: Signature mismatch:
          val x : ('a : immediate). 'a t
        is not included in
          val x : string
+<<<<<<< HEAD
        The type 'a t = ('a : immediate) is not compatible with the type
          string
        string has layout value, which is not a sublayout of immediate.
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+       The type string t = string is not compatible with the type string
+       string has layout value, which is not a sublayout of immediate.
+=======
+       The type string t = string is not compatible with the type string
+       The layout of string is value, because
+         it is the primitive value type string.
+       But the layout of string must be a sublayout of immediate, because
+         of the definition of x at line 8, characters 10-26.
+>>>>>>> e17ba64a (Enable layout histories (#1823))
 |}]
 
 (**********************************************************************)
@@ -1387,8 +1432,12 @@ type ('a : immediate) t2_imm
 Line 3, characters 15-40:
 3 | type s = { f : ('a : value) . 'a -> 'a u }
                    ^^^^^^^^^^^^^^^^^^^^^^^^^
-Error: Type 'a has layout value, which is not a sublayout of immediate.
+Error: The layout of type 'a is value, because
+         of the annotation on the universal variable 'a.
+       But the layout of type 'a must be a sublayout of immediate, because
+         of the definition of t2_imm at line 1, characters 0-28.
 |}]
+<<<<<<< HEAD
 
 (****************************************************)
 (* Test 35: check bad layout error in filter_arrow *)
@@ -1404,3 +1453,12 @@ Line 2, characters 19-31:
 Error:
        'a -> 'b has layout value, which is not a sublayout of immediate.
 |}]
+||||||| parent of e17ba64a (Enable layout histories (#1823))
+=======
+
+(****************************************************)
+(* Test 35: unannotated type parameter defaults to layout value *)
+
+(* CR layouts v2.5: This test moved to [basics_alpha.ml] as it needs a non-value
+   sort.  Bring back here when we have one. *)
+>>>>>>> e17ba64a (Enable layout histories (#1823))
