@@ -499,31 +499,35 @@ let comp_primitive stack_info p sz args =
      array modes (allocation for [Parrayref{s,u}], modification for
      [Parrayset{s,u}]). *)
   | Parrayrefs (Pgenarray_ref _) -> Kccall("caml_array_get", 2)
-  | Parrayrefs (Pfloatarray_ref _) -> Kccall("caml_floatarray_get", 2)
-  | Parrayrefs (Paddrarray_ref | Pintarray_ref) ->
+  | Parrayrefs (Punboxedfloatarray_ref Pfloat64 | Pfloatarray_ref _) ->
+      Kccall("caml_floatarray_get", 2)
+  | Parrayrefs (Punboxedfloatarray_ref Pfloat32) ->
+      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
+        Printlambda.primitive p
+  | Parrayrefs (Punboxedintarray_ref _ | Paddrarray_ref | Pintarray_ref) ->
       Kccall("caml_array_get_addr", 2)
-  | Parrayrefs (Punboxedfloatarray_ref _ | Punboxedintarray_ref _) ->
-      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
-        Printlambda.primitive p
   | Parraysets (Pgenarray_set _) -> Kccall("caml_array_set", 3)
-  | Parraysets Pfloatarray_set -> Kccall("caml_floatarray_set", 3)
-  | Parraysets (Paddrarray_set _ | Pintarray_set) ->
+  | Parraysets (Punboxedfloatarray_set Pfloat64 | Pfloatarray_set) ->
+      Kccall("caml_floatarray_set", 3)
+  | Parraysets (Punboxedfloatarray_set Pfloat32) ->
+      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
+        Printlambda.primitive p
+  | Parraysets (Punboxedintarray_set _ | Paddrarray_set _ | Pintarray_set) ->
       Kccall("caml_array_set_addr", 3)
-  | Parraysets (Punboxedfloatarray_set _ | Punboxedintarray_set _) ->
-      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
-        Printlambda.primitive p
   | Parrayrefu (Pgenarray_ref _) -> Kccall("caml_array_unsafe_get", 2)
-  | Parrayrefu (Pfloatarray_ref _) -> Kccall("caml_floatarray_unsafe_get", 2)
-  | Parrayrefu (Paddrarray_ref | Pintarray_ref) -> Kgetvectitem
-  | Parrayrefu (Punboxedfloatarray_ref _ | Punboxedintarray_ref _) ->
+  | Parrayrefu (Punboxedfloatarray_ref Pfloat64 | Pfloatarray_ref _) ->
+      Kccall("caml_floatarray_unsafe_get", 2)
+  | Parrayrefu (Punboxedfloatarray_ref Pfloat32) ->
       Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
         Printlambda.primitive p
+  | Parrayrefu (Punboxedintarray_ref _ | Paddrarray_ref | Pintarray_ref) -> Kgetvectitem
   | Parraysetu (Pgenarray_set _) -> Kccall("caml_array_unsafe_set", 3)
-  | Parraysetu Pfloatarray_set -> Kccall("caml_floatarray_unsafe_set", 3)
-  | Parraysetu (Paddrarray_set _ | Pintarray_set) -> Ksetvectitem
-  | Parraysetu (Punboxedfloatarray_set _ | Punboxedintarray_set _) ->
+  | Parraysetu (Punboxedfloatarray_set Pfloat64 | Pfloatarray_set) ->
+      Kccall("caml_floatarray_unsafe_set", 3)
+  | Parraysetu (Punboxedfloatarray_set Pfloat32) ->
       Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
         Printlambda.primitive p
+  | Parraysetu (Punboxedintarray_set _ | Paddrarray_set _ | Pintarray_set) -> Ksetvectitem
   | Pctconst c ->
      let const_name = match c with
        | Big_endian -> "big_endian"
@@ -851,10 +855,12 @@ let rec comp_expr stack_info env exp sz cont =
   | Lprim((Pmakearray (kind, _, _)) as p, args, loc) ->
       let cont = add_pseudo_event loc !compunit_name cont in
       begin match kind with
-        Pintarray | Paddrarray ->
+      (* arrays of unboxed types have the same representation
+         as the boxed ones on bytecode *)
+      | Pintarray | Paddrarray | Punboxedintarray _ ->
           comp_args stack_info env args sz
             (Kmakeblock(List.length args, 0) :: cont)
-      | Pfloatarray ->
+      | Pfloatarray | Punboxedfloatarray Pfloat64 ->
           comp_args stack_info env args sz
             (Kmakefloatblock(List.length args) :: cont)
       | Pgenarray ->
@@ -863,9 +869,9 @@ let rec comp_expr stack_info env exp sz cont =
           else comp_args stack_info env args sz
                  (Kmakeblock(List.length args, 0) ::
                   Kccall("caml_make_array", 1) :: cont)
-      | Punboxedfloatarray _ | Punboxedintarray _ ->
+      | Punboxedfloatarray Pfloat32 ->
           Misc.fatal_errorf
-            "Cannot use Pmakeblock for unboxed arrays in bytecode"
+            "Cannot use Pmakeblock for unboxed float32 arrays in bytecode"
             Printlambda.primitive p
       end
   | Lprim((Presume|Prunstack), args, _) ->
