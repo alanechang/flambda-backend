@@ -520,11 +520,6 @@ val check_type_layout :
 val constrain_type_layout :
   Env.t -> type_expr -> layout -> (unit, Layout.Violation.t) result
 
-<<<<<<< HEAD
-(* False if running in principal mode and the type is not principal.
-   True otherwise. *)
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-=======
 (* Update the layout reason of all generalized type vars inside the given [type_expr]
 
    Consider some code like
@@ -548,7 +543,8 @@ val constrain_type_layout :
    itself. *)
 val update_generalized_ty_layout_reason : type_expr -> Layout.creation_reason -> unit
 
->>>>>>> e17ba64a (Enable layout histories (#1823))
+(* False if running in principal mode and the type is not principal.
+   True otherwise. *)
 val is_principal : type_expr -> bool
 
 (* True if a type is immediate. *)

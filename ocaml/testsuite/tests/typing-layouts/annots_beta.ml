@@ -46,7 +46,10 @@ Line 1, characters 8-29:
             ^^^^^^^^^^^^^^^^^^^^^
 Error: This alias is bound to type int but is used as an instance of type
          ('a : float64)
-       int has layout immediate, which is not a sublayout of float64.
+       The layout of int is immediate, because
+         it is the primitive immediate type int.
+       But the layout of int must be a sublayout of float64, because
+         of the annotation on the type variable 'a.
 |}]
 
 let x : (int as ('a : immediate)) list as ('b : value) = [3;4;5]

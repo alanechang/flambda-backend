@@ -405,7 +405,7 @@ module type S = sig val x : t_void end
 Line 1, characters 28-34:
 1 | module type S = sig val x : t_void end
                                 ^^^^^^
-Error: This type for x is not a value type.
+Error: This type signature for x is not a value type.
        The layout of type t_void is void, because
          of the definition of t_void at line 6, characters 0-19.
        But the layout of type t_void must be a sublayout of value, because

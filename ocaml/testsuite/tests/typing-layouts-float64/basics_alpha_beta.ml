@@ -308,7 +308,7 @@ let f6 (m : (module S6_1)) = let module M6 = (val m) in M6.x;;
 Line 1, characters 31-40:
 1 | module type S6_1 = sig val x : t_float64 end
                                    ^^^^^^^^^
-Error: This type for x is not a value type.
+Error: This type signature for x is not a value type.
        The layout of type t_float64 is float64, because
          of the definition of t_float64 at line 1, characters 0-26.
        But the layout of type t_float64 must be a sublayout of value, because
@@ -320,7 +320,7 @@ module type S6_2 = sig val x : 'a t_float64_id end
 Line 1, characters 31-46:
 1 | module type S6_2 = sig val x : 'a t_float64_id end
                                    ^^^^^^^^^^^^^^^
-Error: This type for x is not a value type.
+Error: This type signature for x is not a value type.
        The layout of type 'a t_float64_id is float64, because
          of the definition of t_float64_id at line 2, characters 0-37.
        But the layout of type 'a t_float64_id must overlap with value, because
@@ -332,7 +332,7 @@ module type S6_3 = sig val x : float# end
 Line 1, characters 31-37:
 1 | module type S6_3 = sig val x : float# end
                                    ^^^^^^
-Error: This type for x is not a value type.
+Error: This type signature for x is not a value type.
        The layout of type float# is float64, because
          it is the primitive float64 type float#.
        But the layout of type float# must be a sublayout of value, because
@@ -386,19 +386,11 @@ type f7_4 = [ `A of t_float64 ];;
 Line 1, characters 20-29:
 1 | type f7_4 = [ `A of t_float64 ];;
                         ^^^^^^^^^
-<<<<<<< HEAD:ocaml/testsuite/tests/typing-layouts-float64/basics_alpha_beta.ml
-Error: Polymorphic variant constructor argument types must have layout value.
-        t_float64 has layout float64, which is not a sublayout of value.
-||||||| parent of e17ba64a (Enable layout histories (#1823)):ocaml/testsuite/tests/typing-layouts-float64/basics_alpha.ml
-Error: Polymorpic variant constructor argument types must have layout value.
-        t_float64 has layout float64, which is not a sublayout of value.
-=======
 Error: Polymorphic variant constructor argument types must have layout value.
        The layout of t_float64 is float64, because
          of the definition of t_float64 at line 1, characters 0-26.
        But the layout of t_float64 must be a sublayout of value, because
          it's the type of the field of a polymorphic variant.
->>>>>>> e17ba64a (Enable layout histories (#1823)):ocaml/testsuite/tests/typing-layouts-float64/basics_alpha.ml
 |}];;
 
 type ('a : float64) f7_5 = [ `A of 'a ];;

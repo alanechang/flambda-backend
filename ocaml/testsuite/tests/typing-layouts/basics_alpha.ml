@@ -191,7 +191,7 @@ end;;
 Line 1, characters 27-33:
 1 | module F2 (X : sig val x : t_void end) = struct
                                ^^^^^^
-Error: This type for x is not a value type.
+Error: This type signature for x is not a value type.
        The layout of type t_void is void, because
          of the definition of t_void at line 6, characters 0-19.
        But the layout of type t_void must be a sublayout of value, because
@@ -503,19 +503,11 @@ end
 Line 2, characters 40-46:
 2 |   type foo1 = [ `Foo1 of int | `Baz1 of t_void | `Bar1 of string ];;
                                             ^^^^^^
-<<<<<<< HEAD
-Error: Polymorphic variant constructor argument types must have layout value.
-        t_void has layout void, which is not a sublayout of value.
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-Error: Polymorpic variant constructor argument types must have layout value.
-        t_void has layout void, which is not a sublayout of value.
-=======
 Error: Polymorphic variant constructor argument types must have layout value.
        The layout of t_void is void, because
          of the definition of t_void at line 6, characters 0-19.
        But the layout of t_void must be a sublayout of value, because
          it's the type of the field of a polymorphic variant.
->>>>>>> e17ba64a (Enable layout histories (#1823))
 |}];;
 
 module M8_2 = struct
@@ -573,19 +565,11 @@ end;;
 Line 2, characters 17-23:
 2 |   val x : [`A of t_void]
                      ^^^^^^
-<<<<<<< HEAD
-Error: Polymorphic variant constructor argument types must have layout value.
-        t_void has layout void, which is not a sublayout of value.
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-Error: Polymorpic variant constructor argument types must have layout value.
-        t_void has layout void, which is not a sublayout of value.
-=======
 Error: Polymorphic variant constructor argument types must have layout value.
        The layout of t_void is void, because
          of the definition of t_void at line 6, characters 0-19.
        But the layout of t_void must be a sublayout of value, because
          it's the type of the field of a polymorphic variant.
->>>>>>> e17ba64a (Enable layout histories (#1823))
 |}]
 
 (************************************************)
@@ -757,19 +741,11 @@ Error: Signature mismatch:
          val x : ('a : immediate). 'a
        is not included in
          val x : string
-<<<<<<< HEAD
        The type ('a : immediate) is not compatible with the type string
-       string has layout value, which is not a sublayout of immediate.
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-       The type string is not compatible with the type string
-       string has layout value, which is not a sublayout of immediate.
-=======
-       The type string is not compatible with the type string
        The layout of string is value, because
          it is the primitive value type string.
        But the layout of string must be a sublayout of immediate, because
          of the definition of x at line 8, characters 10-26.
->>>>>>> e17ba64a (Enable layout histories (#1823))
 |}];;
 
 (* This hits the second linktype in moregen (requires expansion to see it's a
@@ -805,20 +781,12 @@ Error: Signature mismatch:
          val x : ('a : immediate). 'a t
        is not included in
          val x : string
-<<<<<<< HEAD
        The type 'a t = ('a : immediate) is not compatible with the type
          string
-       string has layout value, which is not a sublayout of immediate.
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-       The type string t = string is not compatible with the type string
-       string has layout value, which is not a sublayout of immediate.
-=======
-       The type string t = string is not compatible with the type string
        The layout of string is value, because
          it is the primitive value type string.
        But the layout of string must be a sublayout of immediate, because
          of the definition of x at line 8, characters 10-26.
->>>>>>> e17ba64a (Enable layout histories (#1823))
 |}]
 
 (**************************************************************)
@@ -1820,7 +1788,7 @@ external foo33 : t_any = "foo33";;
 Line 1, characters 17-22:
 1 | external foo33 : t_any = "foo33";;
                      ^^^^^
-Error: This type for foo33 is not a value type.
+Error: This type signature for foo33 is not a value type.
        The layout of type t_any is any, because
          of the definition of t_any at line 1, characters 0-18.
        But the layout of type t_any must be a sublayout of value, because
@@ -1833,20 +1801,12 @@ Error: This type for foo33 is not a value type.
 
 (* tested elsewhere *)
 
-(****************************************************)
-(* Test 35: unannotated type parameter defaults to layout value *)
-type 'a t35 = 'a
-let f35 (x: t_void): 'a t35 = x
+(***************************************************)
+(* Test 35: check bad layout error in filter_arrow *)
 
-[%%expect{|
-type 'a t35 = 'a
-Line 2, characters 30-31:
-2 | let f35 (x: t_void): 'a t35 = x
-                                  ^
-Error: This expression has type t_void but an expression was expected of type
-         'a t35 = ('a : value)
-       The layout of t_void is void, because
-         of the definition of t_void at line 1, characters 0-18.
-       But the layout of t_void must be a sublayout of value, because
-         of the definition of t35 at line 1, characters 0-16.
-|}]
+(* tested elsewhere *)
+
+(****************************************************)
+(* Test 36: unannotated type parameter defaults to layout value *)
+
+(* tested elsewhere *)

@@ -1854,19 +1854,9 @@ let report_error ppf = function
                    but %s in this handler does not." (Ident.name id)
   | Illegal_record_field c ->
       fprintf ppf
-<<<<<<< HEAD
         "Sort %a detected where value was expected in a record field:@ Please \
          report this error to the Jane Street compilers team."
         Sort.format (Sort.of_const c)
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-        "Non-value detected in translation:@ Please report this error to \
-         the Jane Street compilers team.@ %a"
-        (Layout.Violation.report_with_name ~name:"This expression") err
-=======
-        "Non-value detected in translation:@ Please report this error to \
-         the Jane Street compilers team.@ %a"
-        (Layout.Violation.report_with_name ~name:"this expression") err
->>>>>>> e17ba64a (Enable layout histories (#1823))
   | Void_sort ty ->
       fprintf ppf
         "Void detected in translation for type %a:@ Please report this error \

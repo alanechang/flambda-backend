@@ -71,17 +71,9 @@ type error =
       ; err : Layout.Violation.t
       }
   | Layout_empty_record
-<<<<<<< HEAD
-  | Non_value_in_sig of Layout.Violation.t * string
+  | Non_value_in_sig of Layout.Violation.t * string * type_expr
   | Float64_in_block of type_expr * layout_sort_loc
   | Mixed_block
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-  | Non_value_in_sig of Layout.Violation.t * string
-  | Float64_in_block of type_expr
-=======
-  | Non_value_in_sig of Layout.Violation.t * string * type_expr
-  | Float64_in_block of type_expr
->>>>>>> e17ba64a (Enable layout histories (#1823))
   | Separability of Typedecl_separability.error
   | Bad_unboxed_attribute of string
   | Boxed_and_unboxed
@@ -2623,10 +2615,10 @@ let report_error ppf = function
          ~offender:(fun ppf -> Printtyp.type_expr ppf typ)) err
   | Layout_empty_record ->
     fprintf ppf "@[Records must contain at least one runtime value.@]"
-<<<<<<< HEAD
-  | Non_value_in_sig (err, val_name) ->
+  | Non_value_in_sig (err, val_name, ty) ->
+    let offender ppf = fprintf ppf "type %a" Printtyp.type_expr ty in
     fprintf ppf "@[This type signature for %s is not a value type.@ %a@]"
-      val_name (Layout.Violation.report_with_name ~name:val_name) err
+      val_name (Layout.Violation.report_with_offender ~offender) err
   | Float64_in_block (typ, lloc) ->
     let struct_desc =
       match lloc with
@@ -2636,18 +2628,6 @@ let report_error ppf = function
            get rejected with the [Mixed_block] error instead. *)
       | External -> assert false
     in
-||||||| parent of e17ba64a (Enable layout histories (#1823))
-  | Non_value_in_sig (err, val_name) ->
-    fprintf ppf "@[This type signature for %s is not a value type.@ %a@]"
-      val_name (Layout.Violation.report_with_name ~name:val_name) err
-  | Float64_in_block typ ->
-=======
-  | Non_value_in_sig (err, val_name, ty) ->
-    let offender ppf = fprintf ppf "type %a" Printtyp.type_expr ty in
-    fprintf ppf "@[This type for %s is not a value type.@ %a@]"
-      val_name (Layout.Violation.report_with_offender ~offender) err
-  | Float64_in_block typ ->
->>>>>>> e17ba64a (Enable layout histories (#1823))
     fprintf ppf
       "@[Type %a has layout float64.@ %s may not yet contain types of this layout.@]"
       Printtyp.type_expr typ struct_desc

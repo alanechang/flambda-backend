@@ -7694,8 +7694,8 @@ and type_let
   let update_exp_layout (_, p, _) (exp, _) =
     let pat_name =
       match p.pat_desc with
-        Tpat_var (id, _, _) -> Some id
-      | Tpat_alias(_, id, _, _) -> Some id
+        Tpat_var (id, _, _, _) -> Some id
+      | Tpat_alias(_, id, _, _, _) -> Some id
       | _ -> None in
     let reason = Layout.Generalized (pat_name, exp.exp_loc) in
     Ctype.update_generalized_ty_layout_reason exp.exp_type reason
