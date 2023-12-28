@@ -374,8 +374,6 @@ module Sort = struct
 
   let for_array_get_result = value
 
-  let for_array_element = value
-
   let for_list_element = value
 end
 
@@ -650,6 +648,7 @@ type concrete_jkind_reason =
   | Wildcard
   | Unification_var
   | Optional_arg_default
+  | Array_element
 
 type value_creation_reason =
   | Class_let_binding
@@ -678,7 +677,6 @@ type value_creation_reason =
   | Default_type_jkind
   | Float_record_field
   | Existential_type_variable
-  | Array_element
   | Lazy_expression
   | Class_argument
   | Structure_element
@@ -1062,6 +1060,7 @@ end = struct
     | Optional_arg_default -> fprintf ppf "used as an optional argument default"
     | Wildcard -> fprintf ppf "a _ in a type"
     | Unification_var -> fprintf ppf "a fresh unification variable"
+    | Array_element -> fprintf ppf "an array element"
 
   let format_annotation_context ppf : annotation_context -> unit = function
     | Type_declaration p ->
@@ -1153,7 +1152,6 @@ end = struct
     | Float_record_field -> fprintf ppf "a field of a float record"
     | Existential_type_variable ->
       fprintf ppf "an unannotated existential type variable"
-    | Array_element -> fprintf ppf "an array element"
     | Lazy_expression -> fprintf ppf "a lazy expression"
     | Class_argument ->
       fprintf ppf "a term-level argument to a class constructor"
@@ -1466,6 +1464,7 @@ module Debug_printers = struct
     | Wildcard -> fprintf ppf "Wildcard"
     | Unification_var -> fprintf ppf "Unification_var"
     | Optional_arg_default -> fprintf ppf "Optional_arg_default"
+    | Array_element -> fprintf ppf "Array_element"
 
   let annotation_context ppf : annotation_context -> unit = function
     | Type_declaration p -> fprintf ppf "Type_declaration %a" Path.print p
@@ -1533,7 +1532,6 @@ module Debug_printers = struct
     | Default_type_jkind -> fprintf ppf "Default_type_jkind"
     | Float_record_field -> fprintf ppf "Float_record_field"
     | Existential_type_variable -> fprintf ppf "Existential_type_variable"
-    | Array_element -> fprintf ppf "Array_element"
     | Lazy_expression -> fprintf ppf "Lazy_expression"
     | Class_argument -> fprintf ppf "Class_argument"
     | Structure_element -> fprintf ppf "Structure_element"
