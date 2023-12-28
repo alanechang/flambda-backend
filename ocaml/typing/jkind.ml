@@ -949,13 +949,7 @@ let default_to_value t = ignore (get_default_value t)
 
 let get t = Jkind_desc.get t.jkind
 
-(* CR layouts: this function is suspect; it seems likely to reisenberg
-   that refactoring could get rid of it *)
-let sort_of_jkind l =
-  match get l with
-  | Const { layout = Sort s; _ } -> Sort.of_const s
-  | Const { layout = Any; _ } -> Misc.fatal_error "Jkind.sort_of_jkind"
-  | Var v -> Sort.of_var v
+
 
 (*********************************)
 (* pretty printing *)
@@ -1663,6 +1657,15 @@ type annotation = const * Jane_asttypes.jkind_annotation
 let string_of_const = Legacy.string_of_const
 
 let equal_const = Legacy.equal_const
+
+(* CR layouts: this function is suspect; it seems likely to reisenberg
+   that refactoring could get rid of it *)
+let sort_of_jkind l =
+  match get l with
+  | Const { layout = Sort s; _ } -> Sort.of_const s
+  | Const { layout = Any; _ } -> Misc.fatal_errorf "Jkind.sort_of_jkind %a" Debug_printers.t l
+  | Var v -> Sort.of_var v
+
 
 type desc =
   | Const of const

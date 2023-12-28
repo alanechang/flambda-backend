@@ -87,6 +87,12 @@ let rec fib = function | 0 | 1 -> 1 | n -> (fib (n - 1)) + (fib (n - 2))
     [
       <def>
         pattern (test_locations.ml[17,534+8]..test_locations.ml[17,534+11])
+        
+{id=124;level=100000000;scope=0;desc=
+ Tarrow(("",Global, Shared, Many,Global, Shared, Many),
+  {id=122;level=100000000;scope=0;desc=
+   Tpoly({id=184;level=100000000;scope=0;desc=Tconstr(int,[],[])},[])},
+  {id=142;level=100000000;scope=0;desc=Tconstr(int,[],[])},Cok)}
           Tpat_var "fib"
           value_mode Global, Shared, Many
         expression (test_locations.ml[17,534+14]..test_locations.ml[19,572+34])
@@ -100,15 +106,23 @@ let rec fib = function | 0 | 1 -> 1 | n -> (fib (n - 1)) + (fib (n - 2))
             [
               <case>
                 pattern (test_locations.ml[18,557+4]..test_locations.ml[18,557+9])
+                
+{id=184;level=100000000;scope=0;desc=Tconstr(int,[],[])}
                   Tpat_or
                   pattern (test_locations.ml[18,557+4]..test_locations.ml[18,557+5])
+                  
+{id=184;level=100000000;scope=0;desc=Tconstr(int,[],[])}
                     Tpat_constant Const_int 0
                   pattern (test_locations.ml[18,557+8]..test_locations.ml[18,557+9])
+                  
+{id=184;level=100000000;scope=0;desc=Tconstr(int,[],[])}
                     Tpat_constant Const_int 1
                 expression (test_locations.ml[18,557+13]..test_locations.ml[18,557+14])
                   Texp_constant Const_int 1
               <case>
                 pattern (test_locations.ml[19,572+4]..test_locations.ml[19,572+5])
+                
+{id=184;level=100000000;scope=0;desc=Tconstr(int,[],[])}
                   Tpat_var "n"
                   value_mode Global, Unique, Many
                 expression (test_locations.ml[19,572+9]..test_locations.ml[19,572+34])

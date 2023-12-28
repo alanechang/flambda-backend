@@ -269,6 +269,7 @@ and package_with i ppf (s, t) =
 and pattern : type k . _ -> _ -> k general_pattern -> unit = fun i ppf x ->
   line i ppf "pattern %a\n" fmt_location x.pat_loc;
   attributes i ppf x.pat_attributes;
+  line i ppf "%a\n" Printtyp.raw_type_expr x.pat_type;
   let i = i+1 in
   begin match x.pat_extra with
   | [] -> ()

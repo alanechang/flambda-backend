@@ -148,6 +148,9 @@ let classify env loc ty : classification =
   | Float64 -> Unboxed_float
   | (Bits32 | Bits64 | Word | Void as const) ->
     raise Typedecl.(Error (loc, Invalid_jkind_in_block (ty, const, Array_expression)))
+    (* Misc.fatal_errorf "Layout %a is not yet supported in array and lazy expressions"
+      Jkind.Sort.format_const const *)
+
 
 let array_type_kind env loc ty =
   match scrape_poly env ty with
@@ -638,7 +641,9 @@ let function2_return_layout env loc sort ty =
 
 let function_arg_layout env loc sort ty =
   match is_function_type env ty with
-  | Some (arg_type, _) -> layout env loc sort arg_type
+  | Some (arg_type, _) ->
+    (try layout env loc sort arg_type
+    with err -> Format.printf "-----------------\n%a\n%a\n------------------\n" Location.print_loc loc Printtyp.raw_type_expr ty; raise err)
   | None -> Misc.fatal_error "function_arg_layout called on non-function type"
 
 (** Whether a forward block is needed for a lazy thunk on a value, i.e.

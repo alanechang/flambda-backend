@@ -624,8 +624,8 @@ and raw_type_list tl = raw_list raw_type tl
 and labeled_type_list tl = raw_list labeled_type tl
 and raw_type_desc ppf = function
     Tvar { name; jkind } ->
-      fprintf ppf "Tvar (@,%a,@,%s)" print_name name
-        (Jkind.to_string jkind)
+      fprintf ppf "Tvar (@,%a,@,%a)" print_name name
+        Jkind.Debug_printers.t jkind
   | Tarrow((l,arg,ret),t1,t2,c) ->
       fprintf ppf "@[<hov1>Tarrow((\"%s\",%a,%a),@,%a,@,%a,@,%s)@]"
         (string_of_label l)
@@ -655,8 +655,8 @@ and raw_type_desc ppf = function
   | Tsubst (t, Some t') ->
       fprintf ppf "@[<1>Tsubst@,(%a,@ Some%a)@]" raw_type t raw_type t'
   | Tunivar { name; jkind } ->
-      fprintf ppf "Tunivar (@,%a,@,%s)" print_name name
-        (Jkind.to_string jkind)
+      fprintf ppf "Tunivar (@,%a,@,%a)" print_name name
+        Jkind.Debug_printers.t jkind
   | Tpoly (t, tl) ->
       fprintf ppf "@[<hov1>Tpoly(@,%a,@,%a)@]"
         raw_type t
