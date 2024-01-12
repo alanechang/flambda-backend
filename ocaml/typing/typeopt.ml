@@ -729,7 +729,7 @@ let report_error ppf = function
          Otherwise, please report this error to the Jane Street compilers team."
         (Language_extension.to_command_line_string Layouts maturity)
   | Not_a_sort ->
-      fprintf ppf "A representable jkind is required here."
+      fprintf ppf "A representable layout is required here."
   | Unsupported_sort const ->
       fprintf ppf "Layout %a is not supported yet." Jkind.Sort.format_const const
 
