@@ -24,11 +24,11 @@ type ('a : float64) t = ('a : float64) array
 
 (* Array operations *)
 
-external length : ('a : float64) array -> int = "%float_u_array_length"
-external get: ('a : float64) array -> int -> ('a : float64) = "%float_u_array_safe_get"
-external set: ('a : float64) array -> int -> ('a : float64) -> unit = "%float_u_array_safe_set"
-external unsafe_get: ('a : float64) array -> int -> ('a : float64) = "%float_u_array_unsafe_get"
-external unsafe_set: ('a : float64) array -> int -> ('a : float64) -> unit = "%float_u_array_unsafe_set"
+external length : ('a : float64) array -> int = "%array_length"
+external get: ('a : float64) array -> int -> ('a : float64) = "%array_safe_get"
+external set: ('a : float64) array -> int -> ('a : float64) -> unit = "%array_safe_set"
+external unsafe_get: ('a : float64) array -> int -> ('a : float64) = "%array_unsafe_get"
+external unsafe_set: ('a : float64) array -> int -> ('a : float64) -> unit = "%array_unsafe_set"
 external floatarray_create : int -> ('a : float64) array = "caml_floatarray_create"
 external unsafe_blit :
   ('a : float64) array -> int -> ('a : float64) array -> int -> int -> unit = "caml_floatarray_blit"
