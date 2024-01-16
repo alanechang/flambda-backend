@@ -285,13 +285,6 @@ let lookup_primitive loc ~poly_mode ~poly_sort pos p =
     | "%array_unsafe_get" -> Primitive (Parrayrefu (gen_array_ref_kind mode), 2)
     | "%array_unsafe_set" ->
        Primitive ((Parraysetu (gen_array_set_kind (get_first_arg_mode ()))), 3)
-    | "%float_u_array_length" -> Primitive ((Parraylength Punboxedfloatarray), 1)
-    | "%float_u_array_safe_get" -> Primitive ((Parrayrefs Punboxedfloatarray_ref), 2)
-    | "%float_u_array_safe_set" ->
-      Primitive ((Parraysets Punboxedfloatarray_set), 3)
-    | "%float_u_array_unsafe_get" -> Primitive (Parrayrefu Punboxedfloatarray_ref, 2)
-    | "%float_u_array_unsafe_set" ->
-      Primitive ((Parraysetu Punboxedfloatarray_set), 3)
     | "%obj_size" -> Primitive ((Parraylength Pgenarray), 1)
     | "%obj_field" -> Primitive ((Parrayrefu (Pgenarray_ref mode)), 2)
     | "%obj_set_field" ->
@@ -556,13 +549,19 @@ let simplify_constant_constructor = function
 let glb_array_type loc t1 t2 =
 
   match t1, t2 with
-  (* Handle unboxed array kinds which can only match with themselves *)
-  | Punboxedfloatarray, Punboxedfloatarray -> Punboxedfloatarray
+  (* Handle unboxed array kinds which should only match with themselves.
+
+     However, a cheat is added just for [Pgenarray] to allow the [%array_*]
+     primitives to work with unboxed types. *)
+  | (Pgenarray | Punboxedfloatarray), Punboxedfloatarray ->
+    Punboxedfloatarray
   | Punboxedfloatarray, _ | _, Punboxedfloatarray ->
     raise(Error(loc, Invalid_array_kind_in_glb Punboxedfloatarray))
-  | Punboxedintarray Pint32, Punboxedintarray Pint32 -> Punboxedintarray Pint32
-  | Punboxedintarray Pint64, Punboxedintarray Pint64 -> Punboxedintarray Pint64
-  | Punboxedintarray Pnativeint, Punboxedintarray Pnativeint ->
+  | (Pgenarray | Punboxedintarray Pint32), Punboxedintarray Pint32 ->
+    Punboxedintarray Pint32
+  | (Pgenarray | Punboxedintarray Pint64), Punboxedintarray Pint64 ->
+    Punboxedintarray Pint64
+  | (Pgenarray | Punboxedintarray Pnativeint), Punboxedintarray Pnativeint ->
     Punboxedintarray Pnativeint
   | (Punboxedintarray _ as kind), _ | _, (Punboxedintarray _ as kind) ->
     raise(Error(loc, Invalid_array_kind_in_glb kind))
@@ -579,13 +578,21 @@ let glb_array_type loc t1 t2 =
 
 let glb_array_ref_type loc t1 t2 =
   match t1, t2 with
-  (* Handle unboxed array kinds which can only match with themselves *)
-  | Punboxedfloatarray_ref, Punboxedfloatarray -> t1
+  (* Handle unboxed array kinds which should only match with themselves.
+
+     However, a cheat is added just for [Pgenarray_ref] to allow the [%array_*]
+     primitives to work with unboxed types. *)
+  | (Pgenarray_ref _ | Punboxedfloatarray_ref), Punboxedfloatarray ->
+    Punboxedfloatarray_ref
   | Punboxedfloatarray_ref, _ | _, Punboxedfloatarray ->
     raise(Error(loc, Invalid_array_kind_in_glb Punboxedfloatarray))
-  | Punboxedintarray_ref Pint32, Punboxedintarray Pint32 -> t1
-  | Punboxedintarray_ref Pint64, Punboxedintarray Pint64 -> t1
-  | Punboxedintarray_ref Pnativeint, Punboxedintarray Pnativeint -> t1
+
+  | (Pgenarray_ref _ | Punboxedintarray_ref Pint32), Punboxedintarray Pint32 ->
+    Punboxedintarray_ref Pint32
+  | (Pgenarray_ref _ | Punboxedintarray_ref Pint64), Punboxedintarray Pint64 ->
+    Punboxedintarray_ref Pint64
+  | (Pgenarray_ref _ | Punboxedintarray_ref Pnativeint), Punboxedintarray Pnativeint ->
+    Punboxedintarray_ref Pnativeint
   | (Punboxedintarray_ref unboxed_int_kind), _ | _, (Punboxedintarray unboxed_int_kind) ->
     raise(Error(loc, Invalid_array_kind_in_glb (Punboxedintarray unboxed_int_kind)))
 
@@ -615,13 +622,20 @@ let glb_array_ref_type loc t1 t2 =
 
 let glb_array_set_type loc t1 t2 =
   match t1, t2 with
-  (* Handle unboxed array kinds which can only match with themselves *)
-  | Punboxedfloatarray_set, Punboxedfloatarray -> t1
+  (* Handle unboxed array kinds which can only match with themselves.
+
+     However, a cheat is added just for [Pgenarray_set] to allow the [%array_*]
+     primitives to work with unboxed types. *)
+  | (Pgenarray_set _ | Punboxedfloatarray_set), Punboxedfloatarray ->
+    Punboxedfloatarray_set
   | Punboxedfloatarray_set, _ | _, Punboxedfloatarray ->
     raise(Error(loc, Invalid_array_kind_in_glb Punboxedfloatarray))
-  | Punboxedintarray_set Pint32, Punboxedintarray Pint32 -> t1
-  | Punboxedintarray_set Pint64, Punboxedintarray Pint64 -> t1
-  | Punboxedintarray_set Pnativeint, Punboxedintarray Pnativeint -> t1
+  | (Pgenarray_set _ | Punboxedintarray_set Pint32), Punboxedintarray Pint32 ->
+    Punboxedintarray_set Pint32
+  | (Pgenarray_set _ | Punboxedintarray_set Pint64), Punboxedintarray Pint64 ->
+    Punboxedintarray_set Pint64
+  | (Pgenarray_set _ | Punboxedintarray_set Pnativeint), Punboxedintarray Pnativeint ->
+    Punboxedintarray_set Pnativeint
   | (Punboxedintarray_set unboxed_int_kind), _ | _, (Punboxedintarray unboxed_int_kind) ->
     raise(Error(loc, Invalid_array_kind_in_glb (Punboxedintarray unboxed_int_kind)))
 

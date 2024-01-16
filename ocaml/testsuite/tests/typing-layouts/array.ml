@@ -139,16 +139,12 @@ Error: Array kind unboxed_float can only be operated on using its own primitives
        and those primitives can only work on unboxed_float
 |}];;
 
-external get : floatarray -> int -> float# = "%float_u_array_safe_get"
+external get : floatarray -> int -> float# = "%array_safe_get"
 let d (x : floatarray) = get x 0
 
 [%%expect{|
-external get : floatarray -> int -> float# = "%float_u_array_safe_get"
-Line 2, characters 25-32:
-2 | let d (x : floatarray) = get x 0
-                             ^^^^^^^
-Error: Array kind unboxed_float can only be operated on using its own primitives
-       and those primitives can only work on unboxed_float
+external get : floatarray -> int -> float# = "%array_safe_get"
+val d : floatarray -> float# = <fun>
 |}];;
 
 (* Doesn't prevent the use of [Obj.magic] *)

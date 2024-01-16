@@ -34,10 +34,10 @@ open! Stdlib
 type ('a : float64) t = ('a : float64) array
 (** An alias for the type of arrays. *)
 
-external length : ('a : float64) array -> int = "%float_u_array_length"
+external length : ('a : float64) array -> int = "%array_length"
 (** Return the length (number of elements) of the given array. *)
 
-external get : ('a : float64) array -> int -> ('a : float64) = "%float_u_array_safe_get"
+external get : ('a : float64) array -> int -> ('a : float64) = "%array_safe_get"
 (** [get a n] returns the element number [n] of array [a].
    The first element has number 0.
    The last element has number [length a - 1].
@@ -46,7 +46,7 @@ external get : ('a : float64) array -> int -> ('a : float64) = "%float_u_array_s
    @raise Invalid_argument
    if [n] is outside the range 0 to [(length a - 1)]. *)
 
-external set : ('a : float64) array -> int -> ('a : float64) -> unit = "%float_u_array_safe_set"
+external set : ('a : float64) array -> int -> ('a : float64) -> unit = "%array_safe_set"
 (** [set a n x] modifies array [a] in place, replacing
    element number [n] with [x].
    You can also write [a.(n) <- x] instead of [set a n x].
@@ -349,8 +349,8 @@ val fast_sort : cmp:(('a : float64) -> ('a : float64) -> int) -> ('a : float64) 
 
 (* The following is for system use only. Do not call directly. *)
 
-external unsafe_get : ('a : float64) array -> int -> ('a : float64) = "%float_u_array_unsafe_get"
-external unsafe_set : ('a : float64) array -> int -> ('a : float64) -> unit = "%float_u_array_unsafe_set"
+external unsafe_get : ('a : float64) array -> int -> ('a : float64) = "%array_unsafe_get"
+external unsafe_set : ('a : float64) array -> int -> ('a : float64) -> unit = "%array_unsafe_set"
 
 (* module Floatarray : sig
  *   external create : int -> floatarray = "caml_floatarray_create"
