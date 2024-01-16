@@ -168,7 +168,8 @@ external get : int32# array -> int -> float = "%floatarray_safe_get"
 Line 2, characters 27-34:
 2 | let d (x : int32# array) = get x 0
                                ^^^^^^^
-Error: Layout bits32 is not supported yet.
+Error: Array kind unboxed_int32 can only be operated on using its own primitives
+       and those primitives can only work on unboxed_int32
 |}];;
 
 external get : int64# array -> int -> float = "%floatarray_safe_get"
@@ -179,7 +180,8 @@ external get : int64# array -> int -> float = "%floatarray_safe_get"
 Line 2, characters 27-34:
 2 | let d (x : int64# array) = get x 0
                                ^^^^^^^
-Error: Layout bits64 is not supported yet.
+Error: Array kind unboxed_int64 can only be operated on using its own primitives
+       and those primitives can only work on unboxed_int64
 |}];;
 
 external get : nativeint# array -> int -> float = "%floatarray_safe_get"
@@ -190,5 +192,6 @@ external get : nativeint# array -> int -> float = "%floatarray_safe_get"
 Line 2, characters 31-38:
 2 | let d (x : nativeint# array) = get x 0
                                    ^^^^^^^
-Error: Layout word is not supported yet.
+Error: Array kind unboxed_nativeint can only be operated on using its own primitives
+       and those primitives can only work on unboxed_nativeint
 |}];;

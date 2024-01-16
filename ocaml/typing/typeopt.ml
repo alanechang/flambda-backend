@@ -103,6 +103,7 @@ type classification =
   | Int   (* any immediate type *)
   | Float
   | Unboxed_float
+  | Unboxed_int of unboxed_integer
   | Lazy
   | Addr  (* anything except a float or a lazy *)
   | Any
@@ -150,7 +151,10 @@ let classify env loc ty : classification =
       assert false
   end
   | Float64 -> Unboxed_float
-  | (Bits32 | Bits64 | Word | Void as const) ->
+  | Bits32 -> Unboxed_int Pint32
+  | Bits64 -> Unboxed_int Pint64
+  | Word -> Unboxed_int Pnativeint
+  | (Void as const) ->
     raise (Error (loc, Unsupported_sort const))
 
 let array_type_kind env loc ty =
@@ -163,6 +167,7 @@ let array_type_kind env loc ty =
       | Addr | Lazy -> Paddrarray
       | Int -> Pintarray
       | Unboxed_float -> Punboxedfloatarray
+      | Unboxed_int i -> Punboxedintarray i
       end
   | Tconstr(p, [], _) when Path.same p Predef.path_floatarray ->
       Pfloatarray
@@ -636,9 +641,12 @@ let function_arg_layout env loc sort ty =
 let lazy_val_requires_forward env loc ty =
   match classify env loc ty with
   | Any | Lazy -> true
-  | Unboxed_float ->
-    if !Clflags.native_code then true
-    else Config.flat_float_array
+  (* CR layouts: Fix this when supporting lazy unboxed values.
+     Blocks with forward_tag can get scanned by the gc thus can't
+     store unboxed values. Not boxing is also incorrect since the lazy
+     type has layout [value] which is different from these unboxed layouts. *)
+  | Unboxed_float | Unboxed_int _ ->
+    Misc.fatal_error "Unboxed value encountered inside lazy expression"
   | Float -> Config.flat_float_array
   | Addr | Int -> false
 
