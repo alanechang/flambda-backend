@@ -495,6 +495,11 @@ CAMLprim value caml_make_unboxed_int32_vect(value len)
   return caml_alloc_custom(ops, num_fields * sizeof(value), 0, 0);
 }
 
+CAMLprim value caml_make_unboxed_int32_vect_bytecode(value len)
+{
+  return caml_make_vect(len, caml_copy_int32(0));
+}
+
 CAMLprim value caml_make_unboxed_int64_vect(value len)
 {
   mlsize_t num_elements = Long_val(len);
@@ -521,6 +526,11 @@ CAMLprim value caml_make_unboxed_nativeint_vect(value len)
   struct custom_operations* ops = &caml_unboxed_nativeint_array_ops;
 
   return caml_alloc_custom(ops, num_elements * sizeof(value), 0, 0);
+}
+
+CAMLprim value caml_make_unboxed_nativeint_vect_bytecode(value len)
+{
+  return caml_make_vect(len, caml_copy_nativeint(0));
 }
 
 /* This primitive is used internally by the compiler to compile
