@@ -491,33 +491,21 @@ let comp_primitive stack_info p sz args =
   | Parrayrefs (Pgenarray_ref _) -> Kccall("caml_array_get", 2)
   | Parrayrefs (Punboxedfloatarray_ref | Pfloatarray_ref _) ->
       Kccall("caml_floatarray_get", 2)
-  | Parrayrefs (Paddrarray_ref | Pintarray_ref) ->
+  | Parrayrefs (Punboxedintarray_ref _ | Paddrarray_ref | Pintarray_ref) ->
       Kccall("caml_array_get_addr", 2)
-  | Parrayrefs (Punboxedintarray_ref _) ->
-      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
-        Printlambda.primitive p
   | Parraysets (Pgenarray_set _) -> Kccall("caml_array_set", 3)
   | Parraysets (Punboxedfloatarray_set | Pfloatarray_set) ->
       Kccall("caml_floatarray_set", 3)
-  | Parraysets (Paddrarray_set _ | Pintarray_set) ->
+  | Parraysets (Punboxedintarray_set _ | Paddrarray_set _ | Pintarray_set) ->
       Kccall("caml_array_set_addr", 3)
-  | Parraysets (Punboxedintarray_set _) ->
-      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
-        Printlambda.primitive p
   | Parrayrefu (Pgenarray_ref _) -> Kccall("caml_array_unsafe_get", 2)
   | Parrayrefu (Punboxedfloatarray_ref | Pfloatarray_ref _) ->
       Kccall("caml_floatarray_unsafe_get", 2)
-  | Parrayrefu (Paddrarray_ref | Pintarray_ref) -> Kgetvectitem
-  | Parrayrefu (Punboxedintarray_ref _) ->
-      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
-        Printlambda.primitive p
+  | Parrayrefu (Punboxedintarray_ref _ | Paddrarray_ref | Pintarray_ref) -> Kgetvectitem
   | Parraysetu (Pgenarray_set _) -> Kccall("caml_array_unsafe_set", 3)
   | Parraysetu (Punboxedfloatarray_set | Pfloatarray_set) ->
       Kccall("caml_floatarray_unsafe_set", 3)
-  | Parraysetu (Paddrarray_set _ | Pintarray_set) -> Ksetvectitem
-  | Parraysetu (Punboxedintarray_set _) ->
-      Misc.fatal_errorf "Cannot use primitive %a for unboxed arrays in bytecode"
-        Printlambda.primitive p
+  | Parraysetu (Punboxedintarray_set _ | Paddrarray_set _ | Pintarray_set) -> Ksetvectitem
   | Pctconst c ->
      let const_name = match c with
        | Big_endian -> "big_endian"
