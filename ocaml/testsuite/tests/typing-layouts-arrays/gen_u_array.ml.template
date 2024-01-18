@@ -13,6 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+(* {{WARNING_COMMENT}} *)
 open! Stdlib
 
 [@@@ocaml.flambda_o3]
@@ -20,38 +21,38 @@ open! Stdlib
 [@@@ocaml.nolabels]
 
 (* An alias for the type of arrays. *)
-type ('a : bits32) t = ('a : bits32) array
+type ('a : {{JKIND}}) t = ('a : {{JKIND}}) array
 
 (* Array operations *)
 
-external length : ('a : bits32). 'a array -> int = "%array_length"
-external get: ('a : bits32). 'a array -> int -> 'a = "%array_safe_get"
-external set: ('a : bits32). 'a array -> int -> 'a -> unit = "%array_safe_set"
-external unsafe_get: ('a : bits32). 'a array -> int -> 'a = "%array_unsafe_get"
-external unsafe_set: ('a : bits32). 'a array -> int -> 'a -> unit = "%array_unsafe_set"
-external unsafe_create : ('a : bits32). int -> 'a array =
-  "caml_make_unboxed_int32_vect_bytecode" "caml_make_unboxed_int32_vect"
-external unsafe_blit : ('a : bits32).
+external length : ('a : {{JKIND}}). 'a array -> int = "%array_length"
+external get: ('a : {{JKIND}}). 'a array -> int -> 'a = "%array_safe_get"
+external set: ('a : {{JKIND}}). 'a array -> int -> 'a -> unit = "%array_safe_set"
+external unsafe_get: ('a : {{JKIND}}). 'a array -> int -> 'a = "%array_unsafe_get"
+external unsafe_set: ('a : {{JKIND}}). 'a array -> int -> 'a -> unit = "%array_unsafe_set"
+external unsafe_create : ('a : {{JKIND}}). int -> 'a array =
+  "{{MAKE_PRIM_BYTECODE}}" "{{MAKE_PRIM_NATIVE}}"
+external unsafe_blit : ('a : {{JKIND}}).
   'a array -> int -> 'a array -> int -> int -> unit =
-  "caml_array_blit" "caml_unboxed_int32_vect_blit"
+  "{{BLIT_PRIM_BYTECODE}}" "{{BLIT_PRIM_NATIVE}}"
 
-let unsafe_fill : ('a : bits32) array -> int -> int -> ('a : bits32) -> unit =
+let unsafe_fill : ('a : {{JKIND}}) array -> int -> int -> ('a : {{JKIND}}) -> unit =
   fun a ofs len v ->
     for i = ofs to ofs + len - 1 do unsafe_set a i v done
 
-let make : int -> ('a : bits32) -> ('a : bits32) array = fun n v ->
+let make : int -> ('a : {{JKIND}}) -> ('a : {{JKIND}}) array = fun n v ->
   let result = unsafe_create n in
   unsafe_fill result 0 n v;
   result
 
 let create = make
 
-let unsafe_sub: ('a : bits32) array -> int -> int -> ('a : bits32) array = fun a ofs len ->
+let unsafe_sub: ('a : {{JKIND}}) array -> int -> int -> ('a : {{JKIND}}) array = fun a ofs len ->
   let result = unsafe_create len in
   unsafe_blit a ofs result 0 len;
   result
 
-let append_prim: ('a : bits32) array -> ('a : bits32) array -> ('a : bits32) array = fun a1 a2 ->
+let append_prim: ('a : {{JKIND}}) array -> ('a : {{JKIND}}) array -> ('a : {{JKIND}}) array = fun a1 a2 ->
   let l1 = length a1 in
   let l2 = length a2 in
   let result = unsafe_create (l1 + l2) in
@@ -59,13 +60,13 @@ let append_prim: ('a : bits32) array -> ('a : bits32) array -> ('a : bits32) arr
   unsafe_blit a2 0 result l1 l2;
   result
 let ensure_ge (x:int) y =
-  if x >= y then x else invalid_arg "Int32_u_array.concat"
+  if x >= y then x else invalid_arg "{{MODULE_NAME}}.concat"
 
 let rec sum_lengths acc = function
   | [] -> acc
   | hd :: tl -> sum_lengths (ensure_ge (length hd + acc) acc) tl
 
-let concat: ('a : bits32) array list -> ('a : bits32) array = fun l ->
+let concat: ('a : {{JKIND}}) array list -> ('a : {{JKIND}}) array = fun l ->
   let len = sum_lengths 0 l in
   let result = unsafe_create len in
   let rec loop l i =
@@ -80,22 +81,10 @@ let concat: ('a : bits32) array list -> ('a : bits32) array = fun l ->
   result
 
 let empty () = unsafe_create 0
-(* external create_float: int -> float array = "caml_make_float_vect"
- * let make_float = create_float *)
-
-(* module Floatarray = struct
- *   external create : int -> floatarray = "caml_unsafe_create"
- *   external length : floatarray -> int = "%floatarray_length"
- *   external get : floatarray -> int -> float = "%floatarray_safe_get"
- *   external set : floatarray -> int -> float -> unit = "%floatarray_safe_set"
- *   external unsafe_get : floatarray -> int -> float = "%floatarray_unsafe_get"
- *   external unsafe_set : floatarray -> int -> float -> unit
- *       = "%floatarray_unsafe_set"
- * end *)
 
 let init l f =
   if l = 0 then (empty ()) else
-  if l < 0 then invalid_arg "Int32_u_array.init"
+  if l < 0 then invalid_arg "{{MODULE_NAME}}.init"
   (* See #6575. We could also check for maximum array size, but this depends
      on whether we create a float array or a regular one... *)
   else
@@ -125,18 +114,18 @@ let append a1 a2 =
 
 let sub a ofs len =
   if ofs < 0 || len < 0 || ofs > length a - len
-  then invalid_arg "Int32_u_array.sub"
+  then invalid_arg "{{MODULE_NAME}}.sub"
   else unsafe_sub a ofs len
 
 let fill a ofs len v =
   if ofs < 0 || len < 0 || ofs > length a - len
-  then invalid_arg "Int32_u_array.fill"
+  then invalid_arg "{{MODULE_NAME}}.fill"
   else unsafe_fill a ofs len v
 
 let blit a1 ofs1 a2 ofs2 len =
   if len < 0 || ofs1 < 0 || ofs1 > length a1 - len
              || ofs2 < 0 || ofs2 > length a2 - len
-  then invalid_arg "Int32_u_array.blit"
+  then invalid_arg "{{MODULE_NAME}}.blit"
   else unsafe_blit a1 ofs1 a2 ofs2 len
 
 let iter f a =
@@ -144,7 +133,7 @@ let iter f a =
 
 let iter2 f a b =
   if length a <> length b then
-    invalid_arg "Int32_u_array.iter2: arrays must have the same length"
+    invalid_arg "{{MODULE_NAME}}.iter2: arrays must have the same length"
   else
     for i = 0 to length a - 1 do f (unsafe_get a i) (unsafe_get b i) done
 
@@ -162,7 +151,7 @@ let map2 f a b =
   let la = length a in
   let lb = length b in
   if la <> lb then
-    invalid_arg "Int32_u_array.map2: arrays must have the same length"
+    invalid_arg "{{MODULE_NAME}}.map2: arrays must have the same length"
   else begin
     if la = 0 then (empty ()) else begin
       let r = create la (f (unsafe_get a 0) (unsafe_get b 0)) in
@@ -191,7 +180,7 @@ let mapi f a =
  *     if i < 0 then res else tolist (i - 1) (unsafe_get a i :: res) in
  *   tolist (length a - 1) []
  *
- * (* Cannot use List.length here because the List module depends on Int32_u_array. *)
+ * (* Cannot use List.length here because the List module depends on {{MODULE_NAME}}. *)
  * let rec list_length accu = function
  *   | [] -> accu
  *   | _::t -> list_length (succ accu) t
@@ -252,7 +241,7 @@ let for_all p a =
 let for_all2 p l1 l2 =
   let n1 = length l1
   and n2 = length l2 in
-  if n1 <> n2 then invalid_arg "Int32_u_array.for_all2"
+  if n1 <> n2 then invalid_arg "{{MODULE_NAME}}.for_all2"
   else let rec loop i =
     if i = n1 then true
     else if p (unsafe_get l1 i) (unsafe_get l2 i) then loop (succ i)
@@ -262,7 +251,7 @@ let for_all2 p l1 l2 =
 let exists2 p l1 l2 =
   let n1 = length l1
   and n2 = length l2 in
-  if n1 <> n2 then invalid_arg "Int32_u_array.exists2"
+  if n1 <> n2 then invalid_arg "{{MODULE_NAME}}.exists2"
   else let rec loop i =
     if i = n1 then false
     else if p (unsafe_get l1 i) (unsafe_get l2 i) then true
@@ -270,8 +259,8 @@ let exists2 p l1 l2 =
   loop 0
 
 
-external to_int32 : ('a : bits32) -> (int32[@local_opt]) = "%box_int32"
-let[@inline always] compare x y = Int32 .compare (to_int32 x) (to_int32 y)
+external to_boxed : ('a : {{JKIND}}) -> ({{BOXED_TYPE}}[@local_opt]) = "{{TO_BOXED_PRIM}}"
+let[@inline always] compare x y = {{BOXED_MODULE}}.compare (to_boxed x) (to_boxed y)
 let mem x a =
   let n = length a in
   let rec loop i =
@@ -328,7 +317,7 @@ let mem x a =
  * let combine a b =
  *   let na = length a in
  *   let nb = length b in
- *   if na <> nb then invalid_arg "Int32_u_array.combine";
+ *   if na <> nb then invalid_arg "{{MODULE_NAME}}.combine";
  *   if na = 0 then (empty ())
  *   else begin
  *     let x = create na (unsafe_get a 0, unsafe_get b 0) in
