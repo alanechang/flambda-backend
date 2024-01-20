@@ -179,6 +179,15 @@ let array_kind exp = array_type_kind exp.exp_env exp.exp_loc exp.exp_type
 
 let array_pattern_kind pat = array_type_kind pat.pat_env pat.pat_loc pat.pat_type
 
+let array_element_sort array_kind =
+  match array_kind with
+  | Pgenarray | Paddrarray | Pfloatarray | Pintarray ->
+    Jkind.Sort.value
+  | Punboxedfloatarray -> Jkind.Sort.float64
+  | Punboxedintarray Pint32 -> Jkind.Sort.bits32
+  | Punboxedintarray Pint64 -> Jkind.Sort.bits64
+  | Punboxedintarray Pnativeint -> Jkind.Sort.word
+
 let bigarray_decode_type env ty tbl dfl =
   match scrape env ty with
   | Tconstr(Pdot(Pident mod_id, type_name), [], _)

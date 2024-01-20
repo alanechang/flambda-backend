@@ -42,57 +42,25 @@ type ('a : any) t5' = 'a array
 
 let v1 = [| #1. |]
 [%%expect{|
-Line 1, characters 12-15:
-1 | let v1 = [| #1. |]
-                ^^^
-Error: This expression has type float# but an expression was expected of type
-         ('a : value)
-       The layout of float# is float64, because
-         it is the primitive float64 type float#.
-       But the layout of float# must be a sublayout of value, because
-         it's the type of an array element.
+val v1 : float# array = [|<abstr>|]
 |}];;
 
 
 let v2 = [| #1l |]
 [%%expect{|
-Line 1, characters 12-15:
-1 | let v2 = [| #1l |]
-                ^^^
-Error: This expression has type int32# but an expression was expected of type
-         ('a : value)
-       The layout of int32# is bits32, because
-         it is the primitive bits32 type int32#.
-       But the layout of int32# must be a sublayout of value, because
-         it's the type of an array element.
+val v2 : int32# array = [|<abstr>|]
 |}];;
 
 
 let v3 = [| #1L |]
 [%%expect{|
-Line 1, characters 12-15:
-1 | let v3 = [| #1L |]
-                ^^^
-Error: This expression has type int64# but an expression was expected of type
-         ('a : value)
-       The layout of int64# is bits64, because
-         it is the primitive bits64 type int64#.
-       But the layout of int64# must be a sublayout of value, because
-         it's the type of an array element.
+val v3 : int64# array = [|<abstr>|]
 |}];;
 
 
 let v4 = [| #1n |]
 [%%expect{|
-Line 1, characters 12-15:
-1 | let v4 = [| #1n |]
-                ^^^
-Error: This expression has type nativeint#
-       but an expression was expected of type ('a : value)
-       The layout of nativeint# is word, because
-         it is the primitive word type nativeint#.
-       But the layout of nativeint# must be a sublayout of value, because
-         it's the type of an array element.
+val v4 : nativeint# array = [|<abstr>|]
 |}];;
 
 (****************************************)

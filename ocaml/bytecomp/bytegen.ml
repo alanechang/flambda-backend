@@ -833,10 +833,12 @@ let rec comp_expr stack_info env exp sz cont =
   | Lprim(Pmakearray (kind, _, _), args, loc) ->
       let cont = add_pseudo_event loc !compunit_name cont in
       begin match kind with
-        Pintarray | Paddrarray ->
+      (* arrays of unboxed types have the same representation
+         as the boxed ones on bytecode *)
+      | Pintarray | Paddrarray | Punboxedintarray _ ->
           comp_args stack_info env args sz
             (Kmakeblock(List.length args, 0) :: cont)
-      | Pfloatarray ->
+      | Pfloatarray | Punboxedfloatarray ->
           comp_args stack_info env args sz
             (Kmakefloatblock(List.length args) :: cont)
       | Pgenarray ->
@@ -845,9 +847,6 @@ let rec comp_expr stack_info env exp sz cont =
           else comp_args stack_info env args sz
                  (Kmakeblock(List.length args, 0) ::
                   Kccall("caml_make_array", 1) :: cont)
-      | Punboxedfloatarray | Punboxedintarray _ ->
-          (* CR layouts v4: change this to support array expressions and comprehension *)
-          Misc.fatal_error "Pmakearray doesn't support unboxed types yet"
       end
   | Lprim((Presume|Prunstack), args, _) ->
       let nargs = List.length args - 1 in

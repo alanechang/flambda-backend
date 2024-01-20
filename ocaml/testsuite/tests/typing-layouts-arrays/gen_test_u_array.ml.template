@@ -804,6 +804,14 @@ let () =
   let to_boxed = {{ELEMENT_MODULE}}.to_{{BOXED_TYPE}} in
   let u_of_int = {{ELEMENT_MODULE}}.of_int in
   let (+.) x y = I.add x y in
+  let rec check_i_upto a i =
+    if i >= 0 then begin
+      assert (to_boxed (get a i) = I.of_int i);
+      check_i_upto a (i - 1);
+    end
+  in
+
+  let check_i a = check_i_upto a (length a - 1) in
   let check_inval f arg =
     match f arg with
     | _ -> assert false
@@ -887,4 +895,177 @@ let () =
   let a = init 0 u_of_int in
   test a;
   check_inval (fun x -> exists2 (fun _ _ -> true) (make 100 x) (make 101 x))
-    (u_of_int 1)
+    (u_of_int 1);
+
+  (* static blocks *)
+  let r = [| #0{{SUFFIX}}; #1{{SUFFIX}}; #2{{SUFFIX}}; #3{{SUFFIX}}; #4{{SUFFIX}}; #5{{SUFFIX}};
+             #6{{SUFFIX}}; #7{{SUFFIX}}; #8{{SUFFIX}}; #9{{SUFFIX}}; #10{{SUFFIX}}; #11{{SUFFIX}};
+             #12{{SUFFIX}}; #13{{SUFFIX}}; #14{{SUFFIX}}; #15{{SUFFIX}}; #16{{SUFFIX}}; #17{{SUFFIX}};
+             #18{{SUFFIX}}; #19{{SUFFIX}}; #20{{SUFFIX}}; #21{{SUFFIX}}; #22{{SUFFIX}}; #23{{SUFFIX}};
+             #24{{SUFFIX}}; #25{{SUFFIX}}; #26{{SUFFIX}}; #27{{SUFFIX}}; #28{{SUFFIX}}; #29{{SUFFIX}};
+             #30{{SUFFIX}}; #31{{SUFFIX}}; #32{{SUFFIX}}; #33{{SUFFIX}}; #34{{SUFFIX}}; #35{{SUFFIX}};
+             #36{{SUFFIX}}; #37{{SUFFIX}}; #38{{SUFFIX}}; #39{{SUFFIX}}; #40{{SUFFIX}}; #41{{SUFFIX}};
+             #42{{SUFFIX}}; #43{{SUFFIX}}; #44{{SUFFIX}}; #45{{SUFFIX}}; #46{{SUFFIX}}; #47{{SUFFIX}};
+             #48{{SUFFIX}}; #49{{SUFFIX}}; #50{{SUFFIX}}; #51{{SUFFIX}}; #52{{SUFFIX}}; #53{{SUFFIX}};
+             #54{{SUFFIX}}; #55{{SUFFIX}}; #56{{SUFFIX}}; #57{{SUFFIX}}; #58{{SUFFIX}}; #59{{SUFFIX}};
+             #60{{SUFFIX}}; #61{{SUFFIX}}; #62{{SUFFIX}}; #63{{SUFFIX}}; #64{{SUFFIX}}; #65{{SUFFIX}};
+             #66{{SUFFIX}}; #67{{SUFFIX}}; #68{{SUFFIX}}; #69{{SUFFIX}}; #70{{SUFFIX}}; #71{{SUFFIX}};
+             #72{{SUFFIX}}; #73{{SUFFIX}}; #74{{SUFFIX}}; #75{{SUFFIX}}; #76{{SUFFIX}}; #77{{SUFFIX}};
+             #78{{SUFFIX}}; #79{{SUFFIX}}; #80{{SUFFIX}}; #81{{SUFFIX}}; #82{{SUFFIX}}; #83{{SUFFIX}};
+             #84{{SUFFIX}}; #85{{SUFFIX}}; #86{{SUFFIX}}; #87{{SUFFIX}}; #88{{SUFFIX}}; #89{{SUFFIX}};
+             #90{{SUFFIX}}; #91{{SUFFIX}}; #92{{SUFFIX}}; #93{{SUFFIX}}; #94{{SUFFIX}}; #95{{SUFFIX}};
+             #96{{SUFFIX}}; #97{{SUFFIX}}; #98{{SUFFIX}}; #99{{SUFFIX}}; #100{{SUFFIX}}; #101{{SUFFIX}};
+             #102{{SUFFIX}}; #103{{SUFFIX}}; #104{{SUFFIX}}; #105{{SUFFIX}}; #106{{SUFFIX}}; #107{{SUFFIX}};
+             #108{{SUFFIX}}; #109{{SUFFIX}}; #110{{SUFFIX}}; #111{{SUFFIX}}; #112{{SUFFIX}}; #113{{SUFFIX}};
+             #114{{SUFFIX}}; #115{{SUFFIX}}; #116{{SUFFIX}}; #117{{SUFFIX}}; #118{{SUFFIX}}; #119{{SUFFIX}};
+             #120{{SUFFIX}}; #121{{SUFFIX}}; #122{{SUFFIX}}; #123{{SUFFIX}}; #124{{SUFFIX}}; #125{{SUFFIX}};
+             #126{{SUFFIX}}; #127{{SUFFIX}}; #128{{SUFFIX}}; #129{{SUFFIX}}; #130{{SUFFIX}}; #131{{SUFFIX}};
+             #132{{SUFFIX}}; #133{{SUFFIX}}; #134{{SUFFIX}}; #135{{SUFFIX}}; #136{{SUFFIX}}; #137{{SUFFIX}};
+             #138{{SUFFIX}}; #139{{SUFFIX}}; #140{{SUFFIX}}; #141{{SUFFIX}}; #142{{SUFFIX}}; #143{{SUFFIX}};
+             #144{{SUFFIX}}; #145{{SUFFIX}}; #146{{SUFFIX}}; #147{{SUFFIX}}; #148{{SUFFIX}}; #149{{SUFFIX}};
+             #150{{SUFFIX}}; #151{{SUFFIX}}; #152{{SUFFIX}}; #153{{SUFFIX}}; #154{{SUFFIX}}; #155{{SUFFIX}};
+             #156{{SUFFIX}}; #157{{SUFFIX}}; #158{{SUFFIX}}; #159{{SUFFIX}}; #160{{SUFFIX}}; #161{{SUFFIX}};
+             #162{{SUFFIX}}; #163{{SUFFIX}}; #164{{SUFFIX}}; #165{{SUFFIX}}; #166{{SUFFIX}}; #167{{SUFFIX}};
+             #168{{SUFFIX}}; #169{{SUFFIX}}; #170{{SUFFIX}}; #171{{SUFFIX}}; #172{{SUFFIX}}; #173{{SUFFIX}};
+             #174{{SUFFIX}}; #175{{SUFFIX}}; #176{{SUFFIX}}; #177{{SUFFIX}}; #178{{SUFFIX}}; #179{{SUFFIX}};
+             #180{{SUFFIX}}; #181{{SUFFIX}}; #182{{SUFFIX}}; #183{{SUFFIX}}; #184{{SUFFIX}}; #185{{SUFFIX}};
+             #186{{SUFFIX}}; #187{{SUFFIX}}; #188{{SUFFIX}}; #189{{SUFFIX}}; #190{{SUFFIX}}; #191{{SUFFIX}};
+             #192{{SUFFIX}}; #193{{SUFFIX}}; #194{{SUFFIX}}; #195{{SUFFIX}}; #196{{SUFFIX}}; #197{{SUFFIX}};
+             #198{{SUFFIX}}; #199{{SUFFIX}} |]
+  in
+  check_i r;
+  let r = [| #0{{SUFFIX}}; #1{{SUFFIX}}; #2{{SUFFIX}}; #3{{SUFFIX}}; #4{{SUFFIX}}; #5{{SUFFIX}};
+             #6{{SUFFIX}}; #7{{SUFFIX}}; #8{{SUFFIX}}; #9{{SUFFIX}}; #10{{SUFFIX}}; #11{{SUFFIX}};
+             #12{{SUFFIX}}; #13{{SUFFIX}}; #14{{SUFFIX}}; #15{{SUFFIX}}; #16{{SUFFIX}}; #17{{SUFFIX}};
+             #18{{SUFFIX}}; #19{{SUFFIX}}; #20{{SUFFIX}}; #21{{SUFFIX}}; #22{{SUFFIX}}; #23{{SUFFIX}};
+             #24{{SUFFIX}}; #25{{SUFFIX}}; #26{{SUFFIX}}; #27{{SUFFIX}}; #28{{SUFFIX}}; #29{{SUFFIX}};
+             #30{{SUFFIX}}; #31{{SUFFIX}}; #32{{SUFFIX}}; #33{{SUFFIX}}; #34{{SUFFIX}}; #35{{SUFFIX}};
+             #36{{SUFFIX}}; #37{{SUFFIX}}; #38{{SUFFIX}}; #39{{SUFFIX}}; #40{{SUFFIX}}; #41{{SUFFIX}};
+             #42{{SUFFIX}}; #43{{SUFFIX}}; #44{{SUFFIX}}; #45{{SUFFIX}}; #46{{SUFFIX}}; #47{{SUFFIX}};
+             #48{{SUFFIX}}; #49{{SUFFIX}}; #50{{SUFFIX}}; #51{{SUFFIX}}; #52{{SUFFIX}}; #53{{SUFFIX}};
+             #54{{SUFFIX}}; #55{{SUFFIX}}; #56{{SUFFIX}}; #57{{SUFFIX}}; #58{{SUFFIX}}; #59{{SUFFIX}};
+             #60{{SUFFIX}}; #61{{SUFFIX}}; #62{{SUFFIX}}; #63{{SUFFIX}}; #64{{SUFFIX}}; #65{{SUFFIX}};
+             #66{{SUFFIX}}; #67{{SUFFIX}}; #68{{SUFFIX}}; #69{{SUFFIX}}; #70{{SUFFIX}}; #71{{SUFFIX}};
+             #72{{SUFFIX}}; #73{{SUFFIX}}; #74{{SUFFIX}}; #75{{SUFFIX}}; #76{{SUFFIX}}; #77{{SUFFIX}};
+             #78{{SUFFIX}}; #79{{SUFFIX}}; #80{{SUFFIX}}; #81{{SUFFIX}}; #82{{SUFFIX}}; #83{{SUFFIX}};
+             #84{{SUFFIX}}; #85{{SUFFIX}}; #86{{SUFFIX}}; #87{{SUFFIX}}; #88{{SUFFIX}}; #89{{SUFFIX}};
+             #90{{SUFFIX}}; #91{{SUFFIX}}; #92{{SUFFIX}}; #93{{SUFFIX}}; #94{{SUFFIX}}; #95{{SUFFIX}};
+             #96{{SUFFIX}}; #97{{SUFFIX}}; #98{{SUFFIX}}; #99{{SUFFIX}}; #100{{SUFFIX}}; #101{{SUFFIX}};
+             #102{{SUFFIX}}; #103{{SUFFIX}}; #104{{SUFFIX}}; #105{{SUFFIX}}; #106{{SUFFIX}}; #107{{SUFFIX}};
+             #108{{SUFFIX}}; #109{{SUFFIX}}; #110{{SUFFIX}}; #111{{SUFFIX}}; #112{{SUFFIX}}; #113{{SUFFIX}};
+             #114{{SUFFIX}}; #115{{SUFFIX}}; #116{{SUFFIX}}; #117{{SUFFIX}}; #118{{SUFFIX}}; #119{{SUFFIX}};
+             #120{{SUFFIX}}; #121{{SUFFIX}}; #122{{SUFFIX}}; #123{{SUFFIX}}; #124{{SUFFIX}}; #125{{SUFFIX}};
+             #126{{SUFFIX}}; #127{{SUFFIX}}; #128{{SUFFIX}}; #129{{SUFFIX}}; #130{{SUFFIX}}; #131{{SUFFIX}};
+             #132{{SUFFIX}}; #133{{SUFFIX}}; #134{{SUFFIX}}; #135{{SUFFIX}}; #136{{SUFFIX}}; #137{{SUFFIX}};
+             #138{{SUFFIX}}; #139{{SUFFIX}}; #140{{SUFFIX}}; #141{{SUFFIX}}; #142{{SUFFIX}}; #143{{SUFFIX}};
+             #144{{SUFFIX}}; #145{{SUFFIX}}; #146{{SUFFIX}}; #147{{SUFFIX}}; #148{{SUFFIX}}; #149{{SUFFIX}};
+             #150{{SUFFIX}}; #151{{SUFFIX}}; #152{{SUFFIX}}; #153{{SUFFIX}}; #154{{SUFFIX}}; #155{{SUFFIX}};
+             #156{{SUFFIX}}; #157{{SUFFIX}}; #158{{SUFFIX}}; #159{{SUFFIX}}; #160{{SUFFIX}}; #161{{SUFFIX}};
+             #162{{SUFFIX}}; #163{{SUFFIX}}; #164{{SUFFIX}}; #165{{SUFFIX}}; #166{{SUFFIX}}; #167{{SUFFIX}};
+             #168{{SUFFIX}}; #169{{SUFFIX}}; #170{{SUFFIX}}; #171{{SUFFIX}}; #172{{SUFFIX}}; #173{{SUFFIX}};
+             #174{{SUFFIX}}; #175{{SUFFIX}}; #176{{SUFFIX}}; #177{{SUFFIX}}; #178{{SUFFIX}}; #179{{SUFFIX}};
+             #180{{SUFFIX}}; #181{{SUFFIX}}; #182{{SUFFIX}}; #183{{SUFFIX}}; #184{{SUFFIX}}; #185{{SUFFIX}};
+             #186{{SUFFIX}}; #187{{SUFFIX}}; #188{{SUFFIX}}; #189{{SUFFIX}}; #190{{SUFFIX}}; #191{{SUFFIX}};
+             #192{{SUFFIX}}; #193{{SUFFIX}}; #194{{SUFFIX}}; #195{{SUFFIX}}; #196{{SUFFIX}}; #197{{SUFFIX}};
+             #198{{SUFFIX}}; #199{{SUFFIX}}; #200{{SUFFIX}} |]
+  in
+  check_i r;
+  (* dynamic blocks *)
+  let[@inline never] f x = x in
+  let r = [| f #0{{SUFFIX}}; f #1{{SUFFIX}}; f #2{{SUFFIX}}; f #3{{SUFFIX}}; f #4{{SUFFIX}}; f #5{{SUFFIX}};
+             f #6{{SUFFIX}}; f #7{{SUFFIX}}; f #8{{SUFFIX}}; f #9{{SUFFIX}}; f #10{{SUFFIX}}; f #11{{SUFFIX}};
+             f #12{{SUFFIX}}; f #13{{SUFFIX}}; f #14{{SUFFIX}}; f #15{{SUFFIX}}; f #16{{SUFFIX}}; f #17{{SUFFIX}};
+             f #18{{SUFFIX}}; f #19{{SUFFIX}}; f #20{{SUFFIX}}; f #21{{SUFFIX}}; f #22{{SUFFIX}}; f #23{{SUFFIX}};
+             f #24{{SUFFIX}}; f #25{{SUFFIX}}; f #26{{SUFFIX}}; f #27{{SUFFIX}}; f #28{{SUFFIX}}; f #29{{SUFFIX}};
+             f #30{{SUFFIX}}; f #31{{SUFFIX}}; f #32{{SUFFIX}}; f #33{{SUFFIX}}; f #34{{SUFFIX}}; f #35{{SUFFIX}};
+             f #36{{SUFFIX}}; f #37{{SUFFIX}}; f #38{{SUFFIX}}; f #39{{SUFFIX}}; f #40{{SUFFIX}}; f #41{{SUFFIX}};
+             f #42{{SUFFIX}}; f #43{{SUFFIX}}; f #44{{SUFFIX}}; f #45{{SUFFIX}}; f #46{{SUFFIX}}; f #47{{SUFFIX}};
+             f #48{{SUFFIX}}; f #49{{SUFFIX}}; f #50{{SUFFIX}}; f #51{{SUFFIX}}; f #52{{SUFFIX}}; f #53{{SUFFIX}};
+             f #54{{SUFFIX}}; f #55{{SUFFIX}}; f #56{{SUFFIX}}; f #57{{SUFFIX}}; f #58{{SUFFIX}}; f #59{{SUFFIX}};
+             f #60{{SUFFIX}}; f #61{{SUFFIX}}; f #62{{SUFFIX}}; f #63{{SUFFIX}}; f #64{{SUFFIX}}; f #65{{SUFFIX}};
+             f #66{{SUFFIX}}; f #67{{SUFFIX}}; f #68{{SUFFIX}}; f #69{{SUFFIX}}; f #70{{SUFFIX}}; f #71{{SUFFIX}};
+             f #72{{SUFFIX}}; f #73{{SUFFIX}}; f #74{{SUFFIX}}; f #75{{SUFFIX}}; f #76{{SUFFIX}}; f #77{{SUFFIX}};
+             f #78{{SUFFIX}}; f #79{{SUFFIX}}; f #80{{SUFFIX}}; f #81{{SUFFIX}}; f #82{{SUFFIX}}; f #83{{SUFFIX}};
+             f #84{{SUFFIX}}; f #85{{SUFFIX}}; f #86{{SUFFIX}}; f #87{{SUFFIX}}; f #88{{SUFFIX}}; f #89{{SUFFIX}};
+             f #90{{SUFFIX}}; f #91{{SUFFIX}}; f #92{{SUFFIX}}; f #93{{SUFFIX}}; f #94{{SUFFIX}}; f #95{{SUFFIX}};
+             f #96{{SUFFIX}}; f #97{{SUFFIX}}; f #98{{SUFFIX}}; f #99{{SUFFIX}}; f #100{{SUFFIX}}; f #101{{SUFFIX}};
+             f #102{{SUFFIX}}; f #103{{SUFFIX}}; f #104{{SUFFIX}}; f #105{{SUFFIX}}; f #106{{SUFFIX}}; f #107{{SUFFIX}};
+             f #108{{SUFFIX}}; f #109{{SUFFIX}}; f #110{{SUFFIX}}; f #111{{SUFFIX}}; f #112{{SUFFIX}}; f #113{{SUFFIX}};
+             f #114{{SUFFIX}}; f #115{{SUFFIX}}; f #116{{SUFFIX}}; f #117{{SUFFIX}}; f #118{{SUFFIX}}; f #119{{SUFFIX}};
+             f #120{{SUFFIX}}; f #121{{SUFFIX}}; f #122{{SUFFIX}}; f #123{{SUFFIX}}; f #124{{SUFFIX}}; f #125{{SUFFIX}};
+             f #126{{SUFFIX}}; f #127{{SUFFIX}}; f #128{{SUFFIX}}; f #129{{SUFFIX}}; f #130{{SUFFIX}}; f #131{{SUFFIX}};
+             f #132{{SUFFIX}}; f #133{{SUFFIX}}; f #134{{SUFFIX}}; f #135{{SUFFIX}}; f #136{{SUFFIX}}; f #137{{SUFFIX}};
+             f #138{{SUFFIX}}; f #139{{SUFFIX}}; f #140{{SUFFIX}}; f #141{{SUFFIX}}; f #142{{SUFFIX}}; f #143{{SUFFIX}};
+             f #144{{SUFFIX}}; f #145{{SUFFIX}}; f #146{{SUFFIX}}; f #147{{SUFFIX}}; f #148{{SUFFIX}}; f #149{{SUFFIX}};
+             f #150{{SUFFIX}}; f #151{{SUFFIX}}; f #152{{SUFFIX}}; f #153{{SUFFIX}}; f #154{{SUFFIX}}; f #155{{SUFFIX}};
+             f #156{{SUFFIX}}; f #157{{SUFFIX}}; f #158{{SUFFIX}}; f #159{{SUFFIX}}; f #160{{SUFFIX}}; f #161{{SUFFIX}};
+             f #162{{SUFFIX}}; f #163{{SUFFIX}}; f #164{{SUFFIX}}; f #165{{SUFFIX}}; f #166{{SUFFIX}}; f #167{{SUFFIX}};
+             f #168{{SUFFIX}}; f #169{{SUFFIX}}; f #170{{SUFFIX}}; f #171{{SUFFIX}}; f #172{{SUFFIX}}; f #173{{SUFFIX}};
+             f #174{{SUFFIX}}; f #175{{SUFFIX}}; f #176{{SUFFIX}}; f #177{{SUFFIX}}; f #178{{SUFFIX}}; f #179{{SUFFIX}};
+             f #180{{SUFFIX}}; f #181{{SUFFIX}}; f #182{{SUFFIX}}; f #183{{SUFFIX}}; f #184{{SUFFIX}}; f #185{{SUFFIX}};
+             f #186{{SUFFIX}}; f #187{{SUFFIX}}; f #188{{SUFFIX}}; f #189{{SUFFIX}}; f #190{{SUFFIX}}; f #191{{SUFFIX}};
+             f #192{{SUFFIX}}; f #193{{SUFFIX}}; f #194{{SUFFIX}}; f #195{{SUFFIX}}; f #196{{SUFFIX}}; f #197{{SUFFIX}};
+             f #198{{SUFFIX}}; f #199{{SUFFIX}} |]
+  in
+  check_i r;
+  let r = [| f #0{{SUFFIX}}; f #1{{SUFFIX}}; f #2{{SUFFIX}}; f #3{{SUFFIX}}; f #4{{SUFFIX}}; f #5{{SUFFIX}};
+             f #6{{SUFFIX}}; f #7{{SUFFIX}}; f #8{{SUFFIX}}; f #9{{SUFFIX}}; f #10{{SUFFIX}}; f #11{{SUFFIX}};
+             f #12{{SUFFIX}}; f #13{{SUFFIX}}; f #14{{SUFFIX}}; f #15{{SUFFIX}}; f #16{{SUFFIX}}; f #17{{SUFFIX}};
+             f #18{{SUFFIX}}; f #19{{SUFFIX}}; f #20{{SUFFIX}}; f #21{{SUFFIX}}; f #22{{SUFFIX}}; f #23{{SUFFIX}};
+             f #24{{SUFFIX}}; f #25{{SUFFIX}}; f #26{{SUFFIX}}; f #27{{SUFFIX}}; f #28{{SUFFIX}}; f #29{{SUFFIX}};
+             f #30{{SUFFIX}}; f #31{{SUFFIX}}; f #32{{SUFFIX}}; f #33{{SUFFIX}}; f #34{{SUFFIX}}; f #35{{SUFFIX}};
+             f #36{{SUFFIX}}; f #37{{SUFFIX}}; f #38{{SUFFIX}}; f #39{{SUFFIX}}; f #40{{SUFFIX}}; f #41{{SUFFIX}};
+             f #42{{SUFFIX}}; f #43{{SUFFIX}}; f #44{{SUFFIX}}; f #45{{SUFFIX}}; f #46{{SUFFIX}}; f #47{{SUFFIX}};
+             f #48{{SUFFIX}}; f #49{{SUFFIX}}; f #50{{SUFFIX}}; f #51{{SUFFIX}}; f #52{{SUFFIX}}; f #53{{SUFFIX}};
+             f #54{{SUFFIX}}; f #55{{SUFFIX}}; f #56{{SUFFIX}}; f #57{{SUFFIX}}; f #58{{SUFFIX}}; f #59{{SUFFIX}};
+             f #60{{SUFFIX}}; f #61{{SUFFIX}}; f #62{{SUFFIX}}; f #63{{SUFFIX}}; f #64{{SUFFIX}}; f #65{{SUFFIX}};
+             f #66{{SUFFIX}}; f #67{{SUFFIX}}; f #68{{SUFFIX}}; f #69{{SUFFIX}}; f #70{{SUFFIX}}; f #71{{SUFFIX}};
+             f #72{{SUFFIX}}; f #73{{SUFFIX}}; f #74{{SUFFIX}}; f #75{{SUFFIX}}; f #76{{SUFFIX}}; f #77{{SUFFIX}};
+             f #78{{SUFFIX}}; f #79{{SUFFIX}}; f #80{{SUFFIX}}; f #81{{SUFFIX}}; f #82{{SUFFIX}}; f #83{{SUFFIX}};
+             f #84{{SUFFIX}}; f #85{{SUFFIX}}; f #86{{SUFFIX}}; f #87{{SUFFIX}}; f #88{{SUFFIX}}; f #89{{SUFFIX}};
+             f #90{{SUFFIX}}; f #91{{SUFFIX}}; f #92{{SUFFIX}}; f #93{{SUFFIX}}; f #94{{SUFFIX}}; f #95{{SUFFIX}};
+             f #96{{SUFFIX}}; f #97{{SUFFIX}}; f #98{{SUFFIX}}; f #99{{SUFFIX}}; f #100{{SUFFIX}}; f #101{{SUFFIX}};
+             f #102{{SUFFIX}}; f #103{{SUFFIX}}; f #104{{SUFFIX}}; f #105{{SUFFIX}}; f #106{{SUFFIX}}; f #107{{SUFFIX}};
+             f #108{{SUFFIX}}; f #109{{SUFFIX}}; f #110{{SUFFIX}}; f #111{{SUFFIX}}; f #112{{SUFFIX}}; f #113{{SUFFIX}};
+             f #114{{SUFFIX}}; f #115{{SUFFIX}}; f #116{{SUFFIX}}; f #117{{SUFFIX}}; f #118{{SUFFIX}}; f #119{{SUFFIX}};
+             f #120{{SUFFIX}}; f #121{{SUFFIX}}; f #122{{SUFFIX}}; f #123{{SUFFIX}}; f #124{{SUFFIX}}; f #125{{SUFFIX}};
+             f #126{{SUFFIX}}; f #127{{SUFFIX}}; f #128{{SUFFIX}}; f #129{{SUFFIX}}; f #130{{SUFFIX}}; f #131{{SUFFIX}};
+             f #132{{SUFFIX}}; f #133{{SUFFIX}}; f #134{{SUFFIX}}; f #135{{SUFFIX}}; f #136{{SUFFIX}}; f #137{{SUFFIX}};
+             f #138{{SUFFIX}}; f #139{{SUFFIX}}; f #140{{SUFFIX}}; f #141{{SUFFIX}}; f #142{{SUFFIX}}; f #143{{SUFFIX}};
+             f #144{{SUFFIX}}; f #145{{SUFFIX}}; f #146{{SUFFIX}}; f #147{{SUFFIX}}; f #148{{SUFFIX}}; f #149{{SUFFIX}};
+             f #150{{SUFFIX}}; f #151{{SUFFIX}}; f #152{{SUFFIX}}; f #153{{SUFFIX}}; f #154{{SUFFIX}}; f #155{{SUFFIX}};
+             f #156{{SUFFIX}}; f #157{{SUFFIX}}; f #158{{SUFFIX}}; f #159{{SUFFIX}}; f #160{{SUFFIX}}; f #161{{SUFFIX}};
+             f #162{{SUFFIX}}; f #163{{SUFFIX}}; f #164{{SUFFIX}}; f #165{{SUFFIX}}; f #166{{SUFFIX}}; f #167{{SUFFIX}};
+             f #168{{SUFFIX}}; f #169{{SUFFIX}}; f #170{{SUFFIX}}; f #171{{SUFFIX}}; f #172{{SUFFIX}}; f #173{{SUFFIX}};
+             f #174{{SUFFIX}}; f #175{{SUFFIX}}; f #176{{SUFFIX}}; f #177{{SUFFIX}}; f #178{{SUFFIX}}; f #179{{SUFFIX}};
+             f #180{{SUFFIX}}; f #181{{SUFFIX}}; f #182{{SUFFIX}}; f #183{{SUFFIX}}; f #184{{SUFFIX}}; f #185{{SUFFIX}};
+             f #186{{SUFFIX}}; f #187{{SUFFIX}}; f #188{{SUFFIX}}; f #189{{SUFFIX}}; f #190{{SUFFIX}}; f #191{{SUFFIX}};
+             f #192{{SUFFIX}}; f #193{{SUFFIX}}; f #194{{SUFFIX}}; f #195{{SUFFIX}}; f #196{{SUFFIX}}; f #197{{SUFFIX}};
+             f #198{{SUFFIX}}; f #199{{SUFFIX}}; f #200{{SUFFIX}} |]
+  in
+  check_i r;
+  check_i [| #0{{SUFFIX}}; ((fun x -> x) #1{{SUFFIX}})|];
+  check_i [| #0{{SUFFIX}}; ((fun x -> x) #1{{SUFFIX}}); #2{{SUFFIX}}|];
+
+  let () =
+    let (=) = {{ELEMENT_MODULE}}.equal in
+    (* match statement *)
+    let d = [| #1{{SUFFIX}}; #2{{SUFFIX}} |] in
+    (match d with
+      | [| a; b |] ->
+        assert (a = #1{{SUFFIX}});
+        assert (b = #2{{SUFFIX}})
+      | _ -> assert false);
+
+    (* let statement pattern *)
+    let a = [||] in
+    let b = [| #1{{SUFFIX}} |] in
+    let c = append a b in
+    let[@warning "-8"] [| d |] = c in
+    assert (d = #1{{SUFFIX}});
+
+    (* function argument pattern *)
+    let[@warning "-8"] f [| b |] = b in
+    assert (f [| #1{{SUFFIX}} |] = #1{{SUFFIX}})
+  in
+  ()
