@@ -51,8 +51,6 @@
                     stdlib__Filename
                     stdlib__Float
                     stdlib__Float_u
-                    stdlib__Float_u_array
-                    stdlib__Float_u_arrayLabels
                     stdlib__Format
                     stdlib__Fun
                     stdlib__Gc

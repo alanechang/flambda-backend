@@ -1,4 +1,6 @@
 (* TEST
+ readonly_files = "float_u_array.ml"
+ modules = "${readonly_files}"
  * native
    flags = "-extension layouts_alpha"
  * bytecode
@@ -71,8 +73,8 @@ module Float_array : S = struct
   let max_length = Sys.max_array_length
 end
 
-module Float_u_array : S = struct
-  include Stdlib__Float_u_array
+module Test_float_u_array : S = struct
+  include Float_u_array
 
   module Float_u = Stdlib__Float_u
 
@@ -816,12 +818,12 @@ module Test (A : S) : sig end = struct
 
 end
 
-module T3 = Test (Float_u_array)
+module T3 = Test (Test_float_u_array)
 
 (* Extra tests for functions not covered above *)
 module Float_u = Stdlib__Float_u
 let () =
-  let open Stdlib__Float_u_array in
+  let open Float_u_array in
   let check_inval f arg =
     match f arg with
     | _ -> assert false

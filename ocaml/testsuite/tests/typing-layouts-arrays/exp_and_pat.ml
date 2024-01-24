@@ -1,4 +1,6 @@
 (* TEST
+ readonly_files = "float_u_array.ml"
+ modules = "${readonly_files}"
  * native
    flags = "-extension comprehensions -extension layouts_alpha"
  * bytecode
@@ -9,7 +11,6 @@
    flags = "-extension comprehensions -extension layouts_beta"
 *)
 
-module Float_u_array = Stdlib__Float_u_array
 module Float_u = Stdlib__Float_u
 
 let of_int = Float_u.of_int
