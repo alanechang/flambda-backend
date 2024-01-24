@@ -1,14 +1,14 @@
 (* TEST
  readonly_files = "int32_u_array.ml"
  modules = "${readonly_files}"
-
- * bytecode
+ * flambda2
+ ** bytecode
    flags = "-extension layouts_alpha"
- * bytecode
+ ** bytecode
    flags = "-extension layouts_beta"
- * native
+ ** native
    flags = "-extension layouts_alpha"
- * native
+ ** native
    flags = "-extension layouts_beta"
 *)
 

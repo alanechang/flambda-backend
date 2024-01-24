@@ -1,13 +1,14 @@
 (* TEST
  readonly_files = "float_u_array.ml"
  modules = "${readonly_files}"
- * native
+ * flambda2
+ ** native
    flags = "-extension layouts_alpha"
- * bytecode
+ ** bytecode
    flags = "-extension layouts_alpha"
- * native
+ ** native
    flags = "-extension layouts_beta"
- * bytecode
+ ** bytecode
    flags = "-extension layouts_beta"
 *)
 open Printf
