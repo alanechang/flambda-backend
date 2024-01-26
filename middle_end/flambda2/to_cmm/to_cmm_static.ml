@@ -151,7 +151,7 @@ let immutable_unboxed_int_array env res updates update_kind ~symbol ~elts
           | [] -> List.rev acc
           | a :: [] -> List.rev (a :: acc)
           | a :: b :: r ->
-            let i = Int64.(add a (shift_left b 32)) in
+            let i = Int64.(add (logand a 0xffffffffL) (shift_left b 32)) in
             aux (i :: acc) r
         in
         aux [] int64_of_elts
