@@ -66,7 +66,8 @@ module Make_boxed (Arg : sig
     val to_boxed : M.element_arg -> I.t
     val of_boxed : I.t -> M.element_arg
   end
-end) : S = struct
+end) : S with type t = Arg.M.t
+         and type element_t = Arg.I.t = struct
   include Arg.M
   include Arg.E
 
