@@ -89,6 +89,7 @@ type error =
   | Nonrec_gadt
   | Invalid_private_row_declaration of type_expr
   | Local_not_enabled
+  | No_unboxed_attribute_on_non_value_sort of Jkind.Sort.const
 
 open Typedtree
 
@@ -2191,17 +2192,22 @@ let error_if_has_deep_native_repr_attributes core_type =
   in
   default_iterator.typ this_iterator core_type
 
-let make_native_repr env core_type sort ty ~global_repr =
+let make_native_repr env core_type (sort : Jkind.Sort.const) ty ~global_repr =
   error_if_has_deep_native_repr_attributes core_type;
-  match get_native_repr_attribute core_type.ptyp_attributes ~global_repr with
-  | Native_repr_attr_absent ->
+  match get_native_repr_attribute core_type.ptyp_attributes ~global_repr, sort with
+  | Native_repr_attr_absent, Value ->
     Same_as_ocaml_repr sort
-  | Native_repr_attr_present kind ->
+  | Native_repr_attr_absent, sort ->
+    raise (Error (core_type.ptyp_loc, No_unboxed_attribute_on_non_value_sort sort))
+  | Native_repr_attr_present kind, Value
+  | Native_repr_attr_present (Untagged as kind), _ ->
     begin match native_repr_of_type env kind ty with
     | None ->
       raise (Error (core_type.ptyp_loc, Cannot_unbox_or_untag_type kind))
     | Some repr -> repr
     end
+  | Native_repr_attr_present Unboxed, sort ->
+    Same_as_ocaml_repr sort
 
 let prim_const_mode m =
   match Mode.Locality.check_const m with
@@ -2985,6 +2991,10 @@ let report_error ppf = function
   | Local_not_enabled ->
       fprintf ppf "@[The local extension is disabled@ \
                    To enable it, pass the '-extension local' flag@]"
+  | No_unboxed_attribute_on_non_value_sort sort ->
+      fprintf ppf "@[[%@unboxed] attribute must be added to external declaration \
+                        argument of layout %a@]"
+        (fun ppf s -> Jkind.Sort.format ppf (Jkind.Sort.of_const s)) sort
 
 let () =
   Location.register_error_of_exn

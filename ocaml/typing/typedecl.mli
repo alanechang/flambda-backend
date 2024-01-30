@@ -130,6 +130,7 @@ type error =
   | Nonrec_gadt
   | Invalid_private_row_declaration of type_expr
   | Local_not_enabled
+  | No_unboxed_attribute_on_non_value_sort of Jkind.Sort.const
 
 exception Error of Location.t * error
 
