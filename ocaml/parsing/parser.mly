@@ -994,6 +994,8 @@ let unboxed_type sloc lident tys =
 %token INITIALIZER            "initializer"
 %token <string * char option> INT      "42"  (* just an example *)
 %token <string * char option> HASH_INT "#42l" (* just an example *)
+%token KIND_ABBREV            "kind_abbrev"
+%token KIND_OF                "kind_of"
 %token <string> LABEL         "~label:" (* just an example *)
 %token LAZY                   "lazy"
 %token LBRACE                 "{"
@@ -1019,6 +1021,7 @@ let unboxed_type sloc lident tys =
 %token MINUS                  "-"
 %token MINUSDOT               "-."
 %token MINUSGREATER           "->"
+%token MOD                    "mod"
 %token MODULE                 "module"
 %token MUTABLE                "mutable"
 %token NEW                    "new"
@@ -1784,6 +1787,7 @@ structure_item:
         in
         wrap_str_ext ~loc:$sloc item ext
       }
+  | kind_abbreviation_decl { failwith "modal kinds syntax not implemented" }
 
 ;
 
@@ -2056,6 +2060,7 @@ signature_item:
         in
         wrap_sig_ext ~loc:$sloc item ext
       }
+  | kind_abbreviation_decl { failwith "modal kinds syntax not implemented" }
 
 (* A module declaration. *)
 %inline module_declaration:
@@ -3781,8 +3786,42 @@ type_parameters:
       { ps }
 ;
 
+primitive_jkind:
+    mkrhs(ident) { Jane_syntax.Jkind.Primitive_layout_or_abbreviation $1 }
+  | UNDERSCORE {
+    (* XXX aec: fix this *)
+    assert false
+  }
+;
+
+jkind:
+    jkind MOD mode_expr {
+      (* XXX aec: fix this *)
+      assert false
+    }
+  | jkind WITH ty=core_type {
+      (* XXX aec: fix this *)
+      ignore ty;
+      assert false
+    }
+  | primitive_jkind { $1 }
+  | KIND_OF ty=core_type   {
+      (* XXX aec: fix this *)
+      ignore ty;
+      assert false
+  }
+;
+
+kind_abbreviation_decl:
+  KIND_ABBREV abbrev=LIDENT EQUAL jkind=jkind {
+    (* XXX aec: fix this *)
+      ignore (abbrev, jkind);
+      assert false
+  }
+;
+
 jkind_annotation: (* : jkind_annotation *)
-  ident { mkloc (Jane_asttypes.jkind_of_string $1) (make_loc $sloc) }
+  mkrhs(jkind) { $1 }
 ;
 
 jkind_constraint:
@@ -4258,6 +4297,18 @@ strict_function_or_labeled_tuple_type:
    | { Mode.empty }
    | mode_expr_legacy_nonempty {$1}
 ;
+
+/* New mode annotation, followed by AT or ATAT and thus enjoys its own namespace */
+%inline mode:
+  | LIDENT { Mode.Const.mk $1 (make_loc $sloc) }
+;
+
+%inline mode_expr:
+  | mode+ {
+    mkloc $1 (make_loc $sloc)
+  }
+;
+
 %inline param_type:
   | mktyp_jane_syntax_ltyp(
     LPAREN bound_vars = typevar_list DOT inner_type = core_type RPAREN

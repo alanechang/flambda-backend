@@ -63,11 +63,14 @@ let keyword_table =
     "include", INCLUDE;
     "inherit", INHERIT;
     "initializer", INITIALIZER;
+    "kind_abbrev", KIND_ABBREV;
+    "kind_of", KIND_OF;
     "lazy", LAZY;
     "let", LET;
     "local_", LOCAL;
     "match", MATCH;
     "method", METHOD;
+    "mod", MOD;
     "module", MODULE;
     "mutable", MUTABLE;
     "new", NEW;
