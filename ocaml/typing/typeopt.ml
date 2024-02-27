@@ -27,7 +27,7 @@ type error =
   | Sort_without_extension of
       Jkind.Sort.t * Language_extension.maturity * type_expr option
   | Non_value_sort_unknown_ty of Jkind.Sort.t
-  | Not_a_sort
+  | Not_a_sort of type_expr * Jkind.Violation.t
   | Unsupported_sort of Jkind.Sort.const
 
 exception Error of Location.t * error
@@ -110,14 +110,14 @@ type classification =
 
 (* Classify a ty into a [classification]. Looks through synonyms, using [scrape_ty].
    Returning [Any] is safe, though may skip some optimizations. *)
-(* CR layouts v2.5: when we allow [float# array] or [float# lazy], this should
-   be updated to check for unboxed float. *)
 let classify env loc ty : classification =
   let ty = scrape_ty env ty in
-  let jkind = Ctype.estimate_type_jkind env ty in
-  (* Provide a better error message that the fatal error in [sort_of_jkind] *)
-  if Jkind.is_any jkind then raise (Error (loc, Not_a_sort));
-  match Jkind.(Sort.get_default_value (sort_of_jkind jkind)) with
+  let sort =
+    match Ctype.type_sort ~why:Array_element env ty with
+    | Ok sort -> sort
+    | Error err -> raise (Error (loc,Not_a_sort (ty, err)))
+  in
+  match Jkind.(Sort.get_default_value sort) with
   | Value -> begin
   if is_always_gc_ignorable env ty then Int
   else match get_desc ty with
@@ -752,8 +752,10 @@ let report_error ppf = function
          build file.@ \
          Otherwise, please report this error to the Jane Street compilers team."
         (Language_extension.to_command_line_string Layouts maturity)
-  | Not_a_sort ->
-      fprintf ppf "A representable layout is required here."
+  | Not_a_sort (ty, err) ->
+      fprintf ppf "A representable layout is required here.@ %a"
+        (Jkind.Violation.report_with_offender
+           ~offender:(fun ppf -> Printtyp.type_expr ppf ty)) err
   | Unsupported_sort const ->
       fprintf ppf "Layout %a is not supported yet." Jkind.Sort.format_const const
 
