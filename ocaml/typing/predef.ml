@@ -239,7 +239,10 @@ let build_initial_env add_type add_extension empty_env =
         *)
         ?jkind_annotation
         ?(param_jkind=Jkind.value ~why:(
-          Type_argument {parent_path = Path.Pident type_ident; position = 1; arity = 1}
+          Type_argument {
+            parent_path = Path.Pident type_ident;
+            position = 1;
+            arity = 1}
         ))
       ~variance ~separability env =
     let param = newgenvar param_jkind in
