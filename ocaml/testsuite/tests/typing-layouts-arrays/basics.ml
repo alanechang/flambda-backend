@@ -167,3 +167,36 @@ Line 2, characters 31-38:
 Error: Array kind unboxed_nativeint can only be operated on using its own primitives
        and those primitives can only work on unboxed_nativeint
 |}];;
+
+(**************************)
+(* Test 5: [@layout_poly] *)
+
+external[@layout_poly] get : ('a : any). 'a array -> int -> 'a = "%array_safe_get"
+let f1 (x : float# array) = get x 0
+let f2 (x : int32# array) = get x 0
+let f3 (x : int64# array) = get x 0
+let f4 (x : nativeint# array) = get x 0
+
+[%%expect{|
+external get : ('a : any). 'a array -> int -> 'a = "%array_safe_get"
+  [@@layout_poly]
+val f1 : float# array -> float# = <fun>
+val f2 : int32# array -> int32# = <fun>
+val f3 : int64# array -> int64# = <fun>
+val f4 : nativeint# array -> nativeint# = <fun>
+|}];;
+
+external[@layout_poly] set : ('a : any). 'a array -> int -> 'a -> unit = "%array_safe_set"
+let f1 (x : float# array) v = set x 0 v
+let f2 (x : int32# array) v = set x 0 v
+let f3 (x : int64# array) v = set x 0 v
+let f4 (x : nativeint# array) v = set x 0 v
+
+[%%expect{|
+external set : ('a : any). 'a array -> int -> 'a -> unit = "%array_safe_set"
+  [@@layout_poly]
+val f1 : float# array -> float# -> unit = <fun>
+val f2 : int32# array -> int32# -> unit = <fun>
+val f3 : int64# array -> int64# -> unit = <fun>
+val f4 : nativeint# array -> nativeint# -> unit = <fun>
+|}]
