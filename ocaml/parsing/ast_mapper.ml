@@ -53,7 +53,7 @@ type mapper = {
   include_description: mapper -> include_description -> include_description;
   modes : mapper -> Jane_syntax.Mode_expr.t -> Jane_syntax.Mode_expr.t;
   jkind_annotation:
-    mapper -> Jane_asttypes.const_jkind -> Jane_asttypes.const_jkind;
+    mapper -> Jane_syntax.Jkind.t -> Jane_syntax.Jkind.t;
   label_declaration: mapper -> label_declaration -> label_declaration;
   location: mapper -> Location.t -> Location.t;
   module_binding: mapper -> module_binding -> module_binding;
@@ -1087,7 +1087,15 @@ let default_mapper =
       in
       map_loc_txt this (fun sub -> List.map (map_const sub)) m);
 
-    jkind_annotation = (fun _this l -> l);
+    jkind_annotation = (fun this -> function
+      | Default -> Default
+      | Primitive_layout_or_abbreviation s ->
+        Primitive_layout_or_abbreviation (map_loc this s)
+      | Mod (t, mode_expr) ->
+        Mod (this.jkind_annotation this t, mode_expr)
+      | With (t, ty) ->
+        With (this.jkind_annotation this t, this.typ this ty)
+      | Of ty -> Of (this.typ this ty));
 
     expr_jane_syntax = E.map_jst;
     extension_constructor_jane_syntax = T.map_extension_constructor_jst;
