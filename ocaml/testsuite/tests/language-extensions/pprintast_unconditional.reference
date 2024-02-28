@@ -53,6 +53,8 @@ string_of_structure: include functor F
 
 tyvar: 'no_tyvars_require_extensions
 
+jkind: value with local_ ('a : value) -> unit
+
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 ##### Extensions disallowed
@@ -109,6 +111,8 @@ string_of_expression: [x for x = 1 to 10]
 string_of_structure: include functor F
 
 tyvar: 'no_tyvars_require_extensions
+
+jkind: value with local_ ('a : value) -> unit
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
