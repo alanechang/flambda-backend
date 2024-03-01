@@ -75,8 +75,8 @@ let test parse_fun pprint print map filename ~extra_checks =
           print_endline str;
           print_endline "====================================================="
       | ast2 ->
-          let ast = map remove_locs remove_locs ast in
-          let ast2 = map remove_locs remove_locs ast2 in
+          (* let ast = map remove_locs remove_locs ast in
+          let ast2 = map remove_locs remove_locs ast2 in *)
           if ast <> ast2 then begin
             Printf.printf "%s:  FAIL, REPARSED AST IS DIFFERENT\n%!" filename;
             let f1 = to_tmp_file print ast in

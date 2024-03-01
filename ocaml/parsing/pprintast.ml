@@ -307,6 +307,18 @@ let maybe_modes m =
   | [] -> None
   | _ -> Some (String.concat " " l)
 
+let maybe_modes_new m =
+  let l =
+    List.map
+      (fun m ->
+        let {txt; _} = (m : Jane_syntax.Mode_expr.Const.t :> _ Location.loc) in
+        txt)
+      m.txt
+  in
+  match l with
+  | [] -> None
+  | _ -> Some (String.concat " " l)
+
 let maybe_modes_of_attrs attrs =
   let m, rest = Jane_syntax.Mode_expr.of_attrs attrs in
   maybe_modes m, rest
@@ -341,7 +353,7 @@ and jkind ctxt f k = match (k : Jane_syntax.Jkind.t) with
   | Primitive_layout_or_abbreviation { txt } ->
     pp f "%s" txt
   | Mod (t, mode_expr) ->
-    begin match maybe_modes mode_expr with
+    begin match maybe_modes_new mode_expr with
     | None -> Misc.fatal_error "malformed jkind annotation"
     | Some mode ->
       pp f "%a mod %s" (jkind ctxt) t mode
