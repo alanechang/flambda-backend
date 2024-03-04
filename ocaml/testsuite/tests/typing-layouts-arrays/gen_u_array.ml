@@ -1,3 +1,6 @@
+(* Provides a functor [Make] to build modules similar stdlib [Array]
+   for unboxed ints. To make this work, unboxed ints are boxed in
+   closures with type [element_arg] to be passed between functions. *)
 
 module type S0 = sig
   (* An alias for the type of arrays. *)

@@ -1,3 +1,8 @@
+(* Provides functor [Make_boxed] that constructs a module with a
+   simliar interface as stdlib [Array] specialized to int64, int32, or
+   nativeint. This module can then be passed to functor [Test] to check
+   for correctness. *)
+
 module type element_S = sig
   type t
   val of_int : int -> t

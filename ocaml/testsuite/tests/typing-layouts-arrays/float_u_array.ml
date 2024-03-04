@@ -1,3 +1,6 @@
+(* This file is not in stdlib because closure middle end can't compile
+   it. Should be moved to somewhere in otherlibs in the future. *)
+
 (**************************************************************************)
 (*                                                                        *)
 (*                                 OCaml                                  *)

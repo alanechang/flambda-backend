@@ -6,7 +6,11 @@
      flags = "-extension comprehensions -extension layouts_alpha"
    ** expect
      flags = "-extension comprehensions -extension layouts_beta"
+   ** expect
+     flags = "-extension comprehensions -extension layouts"
 *)
+(* Failing array comprehension tests. Delete this file and move tests
+   to [exp_and_pat.ml] when the feature is implemented.*)
 
 module Float_u = Stdlib__Float_u
 

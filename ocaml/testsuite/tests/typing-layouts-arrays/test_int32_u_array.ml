@@ -11,7 +11,8 @@
  ** native
    flags = "-extension layouts_beta"
 *)
-
+(* Test compilation correctness for array of unboxed int32s. General
+   tests around type-checking should go to [basics.ml]. *)
 
 module Int32_I = struct
   include Int32

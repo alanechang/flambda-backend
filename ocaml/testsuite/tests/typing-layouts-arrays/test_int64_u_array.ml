@@ -11,6 +11,8 @@
  ** native
    flags = "-extension layouts_beta"
 *)
+(* Test compilation correctness for array of unboxed int64s. General
+   tests around type-checking should go to [basics.ml]. *)
 
 module Int64_I = struct
   include Int64

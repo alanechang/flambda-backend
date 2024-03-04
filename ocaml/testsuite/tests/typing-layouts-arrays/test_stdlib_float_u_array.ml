@@ -3,14 +3,17 @@
  modules = "${readonly_files}"
  * flambda2
  ** native
-   flags = "-extension layouts_alpha"
+   flags = "-extension layouts"
  ** bytecode
-   flags = "-extension layouts_alpha"
+   flags = "-extension layouts"
  ** native
    flags = "-extension layouts_beta"
  ** bytecode
    flags = "-extension layouts_beta"
 *)
+(* Test compilation correctness for array of unboxed floats. General
+   tests around type-checking should go to [basics.ml]. *)
+
 open Printf
 
 (* This is the module type of [Float.Array] except type [t] is abstract. *)

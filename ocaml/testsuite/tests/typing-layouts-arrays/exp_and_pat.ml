@@ -10,7 +10,14 @@
    flags = "-extension comprehensions -extension layouts_beta"
  ** bytecode
    flags = "-extension comprehensions -extension layouts_beta"
+ ** native
+   flags = "-extension comprehensions -extension layouts"
+ ** bytecode
+   flags = "-extension comprehensions -extension layouts"
 *)
+(* Test for literals, patterns, and comprehension (when that's
+   supported) for arrays of unboxed types. In its own file so
+   we can test both native and bytecode. *)
 
 module Float_u = Stdlib__Float_u
 

@@ -3,14 +3,16 @@
  modules = "${readonly_files}"
  * flambda2
  ** bytecode
-   flags = "-extension layouts_alpha"
+   flags = "-extension layouts"
  ** bytecode
    flags = "-extension layouts_beta"
  ** native
-   flags = "-extension layouts_alpha"
+   flags = "-extension layouts"
  ** native
    flags = "-extension layouts_beta"
 *)
+(* Test compilation correctness for array of unboxed nativeints.
+   General tests around type-checking should go to [basics.ml]. *)
 
 module Nativeint_I = struct
   include Nativeint
