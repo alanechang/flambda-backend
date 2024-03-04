@@ -38,22 +38,3 @@ let () =
 let () =
   let[@warning "-8"] f [| b |] = b in
   assert (f [| of_int 1 |] = of_int 1)
-
-(* array comprehension *)
-(* let () =
-  let check_i = Float_u_array.iteri (fun i x -> assert (x = of_int i)) in
-  (* fixed size *)
-  let a = [|Float_u.of_int e for e = 0 to 9|] in
-  check_i a;
-  (* call to length a *)
-  let b = [| x for x in a |] in
-  check_i b;
-  (* dynamic size *)
-  let c = [| Float_u.(add (mul (of_int 10) x) y) for x in a for y in b |] in
-  check_i c;
-  (* mix types *)
-  let d = [| Float_u.(add (mul (of_int 10) x) (of_int y)) for x in a for y = 0 to 9 |] in
-  check_i d;
-  let e = [| Float_u.(add (of_int (10 * x)) y) for x = 0 to 9 for y in a |] in
-  check_i e;
-  () *)
