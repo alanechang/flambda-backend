@@ -7,7 +7,7 @@
    ** expect
      flags = "-extension comprehensions -extension layouts_beta"
    ** expect
-     flags = "-extension comprehensions -extension layouts"
+     flags = "-extension comprehensions"
 *)
 (* Failing array comprehension tests. Delete this file and move tests
    to [exp_and_pat.ml] when the feature is implemented.*)

@@ -11,9 +11,9 @@
  ** bytecode
    flags = "-extension comprehensions -extension layouts_beta"
  ** native
-   flags = "-extension comprehensions -extension layouts"
+   flags = "-extension comprehensions"
  ** bytecode
-   flags = "-extension comprehensions -extension layouts"
+   flags = "-extension comprehensions"
 *)
 (* Test for literals, patterns, and comprehension (when that's
    supported) for arrays of unboxed types. In its own file so

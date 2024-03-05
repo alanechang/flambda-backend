@@ -3,9 +3,7 @@
  modules = "${readonly_files}"
  * flambda2
  ** native
-   flags = "-extension layouts"
  ** bytecode
-   flags = "-extension layouts"
  ** native
    flags = "-extension layouts_beta"
  ** bytecode

@@ -5,7 +5,6 @@
    ** expect
      flags = "-extension layouts_beta"
    ** expect
-     flags = "-extension layouts"
 *)
 (* Tests around type-checking arrays of unboxed types. Tests around
    compilation correctness should go somewhere else. *)
