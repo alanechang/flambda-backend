@@ -111,7 +111,7 @@ Error: Array of unboxed types can't be operated on by primitives
 |}];;
 
 
-(* Doesn't prevent the use of [Obj.magic] *)
+(* [Obj.magic] can bypass the error but this should be discouraged *)
 external get : floatarray -> int -> float = "%floatarray_safe_get"
 let d (x : float# array) = get (Obj.magic x : floatarray) 0
 
