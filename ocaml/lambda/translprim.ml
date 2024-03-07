@@ -26,7 +26,7 @@ open Translmode
 type error =
   | Unknown_builtin_primitive of string
   | Wrong_arity_builtin_primitive of string
-  | Invalid_array_kind_in_glb of array_kind * array_kind
+  | Invalid_floatarray_glb
 
 exception Error of Location.t * error
 
@@ -608,22 +608,6 @@ let simplify_constant_constructor = function
   | Greater_than -> false
   | Compare -> false
 
-let array_kind_of_ref = function
-  | Pgenarray_ref _ -> Pgenarray
-  | Paddrarray_ref -> Paddrarray
-  | Pintarray_ref -> Pintarray
-  | Pfloatarray_ref _ -> Pfloatarray
-  | Punboxedintarray_ref int_kind -> Punboxedintarray int_kind
-  | Punboxedfloatarray_ref float_kind -> Punboxedfloatarray float_kind
-
-let array_kind_of_set = function
-  | Pgenarray_set _ -> Pgenarray
-  | Paddrarray_set _ -> Paddrarray
-  | Pintarray_set -> Pintarray
-  | Pfloatarray_set -> Pfloatarray
-  | Punboxedintarray_set int_kind -> Punboxedintarray int_kind
-  | Punboxedfloatarray_set float_kind -> Punboxedfloatarray float_kind
-
 (* The following function computes the greatest lower bound of array kinds:
 
         gen      unboxed-float  unboxed-int32  unboxed-int64  unboxed-nativeint
@@ -645,13 +629,19 @@ let glb_array_type loc t1 t2 =
   (* Handle unboxed array kinds which should only match with themselves.
 
      However, a cheat is added just for [Pgenarray] to allow the [%array_*]
-     primitives to work with unboxed types. *)
+     primitives to work with unboxed types.
+
+     WARNING: This trick will stop working when [Config.flat_float_array]
+     becomes [false].*)
+  | Pfloatarray, (Punboxedfloatarray _ | Punboxedintarray _) ->
+    (* Have a nice error message for a case reachable. *)
+    raise(Error(loc, Invalid_floatarray_glb))
   | (Pgenarray | Punboxedfloatarray Pfloat64), Punboxedfloatarray Pfloat64 ->
     Punboxedfloatarray Pfloat64
   | (Pgenarray | Punboxedfloatarray Pfloat32), Punboxedfloatarray Pfloat32 ->
     Punboxedfloatarray Pfloat32
   | Punboxedfloatarray _, _ | _, Punboxedfloatarray _ ->
-    raise(Error(loc, Invalid_array_kind_in_glb (t1, t2)))
+    Misc.fatal_error "unexpected array kind in glb"
   | (Pgenarray | Punboxedintarray Pint32), Punboxedintarray Pint32 ->
     Punboxedintarray Pint32
   | (Pgenarray | Punboxedintarray Pint64), Punboxedintarray Pint64 ->
@@ -659,7 +649,7 @@ let glb_array_type loc t1 t2 =
   | (Pgenarray | Punboxedintarray Pnativeint), Punboxedintarray Pnativeint ->
     Punboxedintarray Pnativeint
   | Punboxedintarray _, _ | _, Punboxedintarray _ ->
-    raise(Error(loc, Invalid_array_kind_in_glb (t1, t2)))
+    Misc.fatal_error "unexpected array kind in glb"
 
   (* No GLB; only used in the [Obj.magic] case *)
   | Pfloatarray, (Paddrarray | Pintarray)
@@ -676,14 +666,20 @@ let glb_array_ref_type loc t1 t2 =
   (* Handle unboxed array kinds which should only match with themselves.
 
      However, a cheat is added just for [Pgenarray_ref] to allow the [%array_*]
-     primitives to work with unboxed types. *)
+     primitives to work with unboxed types.
+
+     WARNING: This trick will stop working when [Config.flat_float_array]
+     becomes [false].*)
+  | Pfloatarray_ref _, (Punboxedfloatarray _ | Punboxedintarray _) ->
+    (* Have a nice error message for a case reachable. *)
+    raise(Error(loc, Invalid_floatarray_glb))
   | (Pgenarray_ref _ | Punboxedfloatarray_ref Pfloat64), Punboxedfloatarray Pfloat64 ->
     Punboxedfloatarray_ref Pfloat64
   | (Pgenarray_ref _ | Punboxedfloatarray_ref Pfloat32), Punboxedfloatarray Pfloat32 ->
     Punboxedfloatarray_ref Pfloat32
   | Punboxedfloatarray_ref _, _
   | _, Punboxedfloatarray _ ->
-    raise(Error(loc, Invalid_array_kind_in_glb (array_kind_of_ref t1, t2)))
+    Misc.fatal_error "unexpected array kind in glb"
   | (Pgenarray_ref _ | Punboxedintarray_ref Pint32), Punboxedintarray Pint32 ->
     Punboxedintarray_ref Pint32
   | (Pgenarray_ref _ | Punboxedintarray_ref Pint64), Punboxedintarray Pint64 ->
@@ -691,7 +687,7 @@ let glb_array_ref_type loc t1 t2 =
   | (Pgenarray_ref _ | Punboxedintarray_ref Pnativeint), Punboxedintarray Pnativeint ->
     Punboxedintarray_ref Pnativeint
   | Punboxedintarray_ref _, _ | _, Punboxedintarray _ ->
-    raise(Error(loc, Invalid_array_kind_in_glb (array_kind_of_ref t1, t2)))
+    Misc.fatal_error "unexpected array kind in glb"
 
   (* No GLB; only used in the [Obj.magic] case *)
   | Pfloatarray_ref _, (Paddrarray | Pintarray)
@@ -722,14 +718,20 @@ let glb_array_set_type loc t1 t2 =
   (* Handle unboxed array kinds which can only match with themselves.
 
      However, a cheat is added just for [Pgenarray_set] to allow the [%array_*]
-     primitives to work with unboxed types. *)
+     primitives to work with unboxed types.
+
+     WARNING: This trick will stop working when [Config.flat_float_array]
+     becomes [false].*)
+  | Pfloatarray_set, (Punboxedfloatarray _ | Punboxedintarray _) ->
+    (* Have a nice error message for a case reachable. *)
+    raise(Error(loc, Invalid_floatarray_glb))
   | (Pgenarray_set _ | Punboxedfloatarray_set Pfloat64), Punboxedfloatarray Pfloat64 ->
     Punboxedfloatarray_set Pfloat64
   | (Pgenarray_set _ | Punboxedfloatarray_set Pfloat32), Punboxedfloatarray Pfloat32 ->
     Punboxedfloatarray_set Pfloat32
   | Punboxedfloatarray_set _, _
   | _, Punboxedfloatarray _ ->
-    raise(Error(loc, Invalid_array_kind_in_glb (array_kind_of_set t1, t2)))
+    Misc.fatal_error "unexpected array kind in glb"
   | (Pgenarray_set _ | Punboxedintarray_set Pint32), Punboxedintarray Pint32 ->
     Punboxedintarray_set Pint32
   | (Pgenarray_set _ | Punboxedintarray_set Pint64), Punboxedintarray Pint64 ->
@@ -737,7 +739,7 @@ let glb_array_set_type loc t1 t2 =
   | (Pgenarray_set _ | Punboxedintarray_set Pnativeint), Punboxedintarray Pnativeint ->
     Punboxedintarray_set Pnativeint
   | Punboxedintarray_set _, _ | _, Punboxedintarray _ ->
-    raise(Error(loc, Invalid_array_kind_in_glb (array_kind_of_set t1, t2)))
+    Misc.fatal_error "unexpected array kind in glb"
 
   (* No GLB; only used in the [Obj.magic] case *)
   | Pfloatarray_set, (Paddrarray | Pintarray)
@@ -1375,24 +1377,10 @@ let report_error ppf = function
       fprintf ppf "Unknown builtin primitive \"%s\"" prim_name
   | Wrong_arity_builtin_primitive prim_name ->
       fprintf ppf "Wrong arity for builtin primitive \"%s\"" prim_name
-  | Invalid_array_kind_in_glb (k1, k2) ->
-      let is_non_value = function
-      | Pgenarray | Paddrarray | Pintarray | Pfloatarray -> false
-      | Punboxedfloatarray _
-      | Punboxedintarray _ -> true
-      in
-      let prim, elements =
-        match is_non_value k1, is_non_value k2 with
-        | true, false -> "unboxed types", "boxed types"
-        | false, true -> "boxed types",  "unboxed types"
-        | true, true | false, false ->
-          Misc.fatal_error
-            "Unexpected array kinds in Invalid_array_kind_in_glb"
-      in
+  | Invalid_floatarray_glb ->
       fprintf ppf
-        "@[Array of %s can't be operated on by primitives@ \
-           for arrays of %s.@]"
-        elements prim
+        "@[Floatarray primitives can't be used on arrays containing@ \
+           unboxed types.@]"
 let () =
   Location.register_error_of_exn
     (function
