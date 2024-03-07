@@ -910,3 +910,43 @@ let () =
   test a;
   check_inval (fun x -> exists2 (fun _ _ -> true) (make 100 x) (make 101 x))
     (Float_u.of_int 1)
+
+module Test_same_memory_layout_as_floatarray = struct
+  (* It is currently the case that [float# array] has the same memory
+     representation as [floatarray]. This test is here to document
+     that fact and help catch issues when this assumption is no longer
+     true. *)
+
+  external get_f : floatarray -> int -> float = "%floatarray_safe_get"
+  let get_f (arr : float# array) idx =
+    get_f (Obj.magic arr : floatarray) idx |> Float_u.of_float
+
+  external set_f : floatarray -> int -> float -> unit = "%floatarray_safe_set"
+  let set_f (arr : float# array) idx v =
+    set_f (Obj.magic arr : floatarray) idx (Float_u.to_float v)
+
+  let float_u_eq x y = Float_u.compare x y = 0
+  let check_eq arr g =
+    let open Float_u_array in
+    for i = 0 to length arr - 1 do
+      assert (float_u_eq (g arr i) (get arr i))
+    done
+
+  let () =
+    let open Float_u_array in
+
+    check_eq (Float_u_array.make 10 #1.) get_f;
+    check_eq [| #1.; #2.; #3.|] get_f;
+
+    let fill arr v =
+      for i = 0 to length arr - 1 do
+        set_f arr i v; assert(float_u_eq (get arr i) v)
+      done
+    in
+    let check_all_eq arr v = assert (for_all (fun x -> float_u_eq x v) arr) in
+    let arr = [| #1.; #2.; #3.|] in
+    fill arr #0.; check_all_eq arr #0.;
+    let arr = Float_u_array.make 10 #1. in
+    fill arr #0.; check_all_eq arr #0.;
+    ()
+end
