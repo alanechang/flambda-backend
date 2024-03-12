@@ -3,7 +3,7 @@
    nativeint. This module can then be passed to functor [Test] to check
    for correctness. *)
 
-module type element_S = sig
+module type Element_intf = sig
   type t
   val of_int : int -> t
   val add : t -> t -> t
@@ -67,12 +67,12 @@ module type S = sig
   (* From Sys, rather than Float.Array *)
   val max_length : int
 
-  module I : element_S with type t = element_t
+  module I : Element_intf with type t = element_t
 end
 
 module Make_boxed (Arg : sig
   module M : Gen_u_array.S
-  module I : element_S
+  module I : Element_intf
   module E : sig
     val to_boxed : M.element_arg -> I.t
     val of_boxed : I.t -> M.element_arg
