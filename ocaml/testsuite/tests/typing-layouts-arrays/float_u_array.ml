@@ -81,18 +81,6 @@ let concat: ('a : float64) array list -> ('a : float64) array = fun l ->
   result
 
 let empty () = floatarray_create 0
-(* external create_float: int -> float array = "caml_make_float_vect"
- * let make_float = create_float *)
-
-(* module Floatarray = struct
- *   external create : int -> floatarray = "caml_floatarray_create"
- *   external length : floatarray -> int = "%floatarray_length"
- *   external get : floatarray -> int -> float = "%floatarray_safe_get"
- *   external set : floatarray -> int -> float -> unit = "%floatarray_safe_set"
- *   external unsafe_get : floatarray -> int -> float = "%floatarray_unsafe_get"
- *   external unsafe_set : floatarray -> int -> float -> unit
- *       = "%floatarray_unsafe_set"
- * end *)
 
 let init l f =
   if l = 0 then (empty ()) else
@@ -187,6 +175,8 @@ let mapi f a =
     r
   end
 
+(* CR layouts: Uncommment functions below when we can have unboxed
+   things in lists and other types. *)
 (* let to_list a =
  *   let rec tolist i res =
  *     if i < 0 then res else tolist (i - 1) (unsafe_get a i :: res) in
@@ -213,6 +203,8 @@ let fold_left f x a =
   done;
   !r
 
+(* CR layouts: Uncommment functions below when we can have unboxed
+   things in lists and other types. *)
 (* let fold_left_map f acc input_array =
  *   let len = length input_array in
  *   if len = 0 then (acc, (empty ())) else begin
@@ -281,6 +273,8 @@ let mem x a =
     else loop (succ i) in
   loop 0
 
+(* CR layouts: Uncommment functions below when we can have unboxed
+   things in lists and other types. *)
 (* let memq x a =
  *   let n = length a in
  *   let rec loop i =
@@ -446,6 +440,8 @@ let fast_sort = stable_sort
 
 (** {1 Iterators} *)
 
+(* CR layouts: Uncommment functions below when we can have unboxed
+   things in lists and other types. *)
 (* let to_seq a =
  *   let rec aux i () =
  *     if i < length a
