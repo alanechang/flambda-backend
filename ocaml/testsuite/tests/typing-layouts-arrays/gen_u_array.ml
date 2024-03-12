@@ -9,6 +9,12 @@ module type S0 = sig
   (* An alias for the type of arrays. *)
   type element_t: any
   type ('a : any) array_t
+  (* Reason why we need [element_arg] is not to be able to define
+     modules that implements [S0]. We can do that with it.
+
+     Instead, we need this to be able to use the methods below when
+     [S0] is the type of a functor argument. In which case, the
+     function argument/return types needs to be representable. *)
   type element_arg = unit -> element_t
   type t = element_t array_t
 
