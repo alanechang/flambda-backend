@@ -470,7 +470,12 @@ let iterator ~transl_exp ~scopes ~loc
         Let_binding.make (Immutable Strict) (Pvalue Pgenval)
           "iter_arr" (transl_exp ~scopes Jkind.Sort.for_predef_value iter_arr_exp)
       in
-      let iter_arr_kind = Typeopt.array_kind iter_arr_exp in
+      let iter_arr_kind =
+        Typeopt.array_type_kind
+          iter_arr_exp.exp_env
+          iter_arr_exp.exp_loc
+          iter_arr_exp.exp_type
+      in
       let iter_len =
         (* Extra let-binding if we're not in the fixed-size array case; the
            middle-end will simplify this for us *)

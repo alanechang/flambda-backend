@@ -99,6 +99,16 @@ let maybe_pointer_type env ty =
 
 let maybe_pointer exp = maybe_pointer_type exp.exp_env exp.exp_type
 
+(* CR layouts v2.8: Calling [type_sort] in [typeopt] is not ideal and
+   this function should be removed at some point. To do that, there
+   needs to be a way to store sort vars on [Tconstr]s. That means
+   either introducing a [Tpoly_constr], allow type parameters with
+   sort info, or do something else. *)
+let type_sort ~why env loc ty =
+  match Ctype.type_sort ~why env ty with
+  | Ok sort -> sort
+  | Error err -> raise (Error (loc, Not_a_sort (ty, err)))
+
 type classification =
   | Int   (* any immediate type *)
   | Float
@@ -110,13 +120,8 @@ type classification =
 
 (* Classify a ty into a [classification]. Looks through synonyms, using [scrape_ty].
    Returning [Any] is safe, though may skip some optimizations. *)
-let classify env loc ty : classification =
+let classify env loc ty sort : classification =
   let ty = scrape_ty env ty in
-  let sort =
-    match Ctype.type_sort ~why:Array_element env ty with
-    | Ok sort -> sort
-    | Error err -> raise (Error (loc,Not_a_sort (ty, err)))
-  in
   match Jkind.(Sort.get_default_value sort) with
   | Value -> begin
   if is_always_gc_ignorable env ty then Int
@@ -158,11 +163,17 @@ let classify env loc ty : classification =
   | Void ->
     raise (Error (loc, Unsupported_sort Void))
 
-let array_type_kind env loc ty =
+let array_type_kind_gen ?elt_sort env loc ty =
   match scrape_poly env ty with
   | Tconstr(p, [elt_ty], _)
     when Path.same p Predef.path_array || Path.same p Predef.path_iarray ->
-      begin match classify env loc elt_ty with
+      let elt_sort =
+        match elt_sort with
+        | Some s -> s
+        | None ->
+          type_sort ~why:Array_element env loc elt_ty
+      in
+      begin match classify env loc elt_ty elt_sort with
       | Any -> if Config.flat_float_array then Pgenarray else Paddrarray
       | Float -> if Config.flat_float_array then Pfloatarray else Paddrarray
       | Addr | Lazy -> Paddrarray
@@ -176,20 +187,14 @@ let array_type_kind env loc ty =
       (* This can happen with e.g. Obj.field *)
       Pgenarray
 
-let array_kind exp = array_type_kind exp.exp_env exp.exp_loc exp.exp_type
+let array_type_kind env loc ty =
+  array_type_kind_gen ?elt_sort:None env loc ty
 
-let array_pattern_kind pat = array_type_kind pat.pat_env pat.pat_loc pat.pat_type
+let array_kind exp elt_sort =
+  array_type_kind_gen ~elt_sort exp.exp_env exp.exp_loc exp.exp_type
 
-let array_element_sort array_kind =
-  match array_kind with
-  | Pgenarray | Paddrarray | Pfloatarray | Pintarray ->
-    Jkind.Sort.value
-  | Punboxedfloatarray Pfloat64 -> Jkind.Sort.float64
-  | Punboxedfloatarray Pfloat32 ->
-    Misc.fatal_error "Pfloat32 not supported yet"
-  | Punboxedintarray Pint32 -> Jkind.Sort.bits32
-  | Punboxedintarray Pint64 -> Jkind.Sort.bits64
-  | Punboxedintarray Pnativeint -> Jkind.Sort.word
+let array_pattern_kind pat elt_sort =
+  array_type_kind_gen ~elt_sort pat.pat_env pat.pat_loc pat.pat_type
 
 let bigarray_decode_type env ty tbl dfl =
   match scrape env ty with
@@ -653,7 +658,8 @@ let function_arg_layout env loc sort ty =
 (** Whether a forward block is needed for a lazy thunk on a value, i.e.
     if the value can be represented as a float/forward/lazy *)
 let lazy_val_requires_forward env loc ty =
-  match classify env loc ty with
+  let sort = Jkind.Sort.for_lazy_body in
+  match classify env loc ty sort with
   | Any | Lazy -> true
   (* CR layouts: Fix this when supporting lazy unboxed values.
      Blocks with forward_tag can get scanned by the gc thus can't
