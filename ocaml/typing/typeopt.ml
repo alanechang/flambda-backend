@@ -155,8 +155,8 @@ let classify env loc ty : classification =
   | Bits32 -> Unboxed_int Pint32
   | Bits64 -> Unboxed_int Pint64
   | Word -> Unboxed_int Pnativeint
-  | (Void as const) ->
-    raise (Error (loc, Unsupported_sort const))
+  | Void ->
+    raise (Error (loc, Unsupported_sort Void))
 
 let array_type_kind env loc ty =
   match scrape_poly env ty with
