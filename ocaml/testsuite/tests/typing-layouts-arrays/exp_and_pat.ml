@@ -21,27 +21,26 @@
 
 module Float_u = Stdlib__Float_u
 
-let of_int = Float_u.of_int
 let (=) = Float_u.equal
 
 (* match statement *)
 let () =
-  let d = [| of_int 1; of_int 2 |] in
+  let d = [| #1.; #2. |] in
   match d with
     | [| a; b |] ->
-      assert (a = of_int 1);
-      assert (b = of_int 2)
+      assert (a = #1.);
+      assert (b = #2.)
     | _ -> assert false
 
 (* let statement pattern *)
 let () =
   let a = [||] in
-  let b = [| of_int 1 |] in
+  let b = [| #1. |] in
   let c = Float_u_array.append a b in
   let[@warning "-8"] [| d |] = c in
-  assert (d = of_int 1)
+  assert (d = #1.)
 
 (* function argument pattern *)
 let () =
   let[@warning "-8"] f [| b |] = b in
-  assert (f [| of_int 1 |] = of_int 1)
+  assert (f [| #1. |] = #1.)
