@@ -203,3 +203,54 @@ val f2 : int32# array -> int32# -> unit = <fun>
 val f3 : int64# array -> int64# -> unit = <fun>
 val f4 : nativeint# array -> nativeint# -> unit = <fun>
 |}]
+
+(***********************************)
+(* Test 6: sort variable inference *)
+
+module M6_1 = struct
+  (* sort var in pat *)
+
+  let get_third arr =
+    match arr with
+    | [| _; _; z |] -> z
+    | _ -> assert false
+
+  let _ =  assert (Stdlib__Int32_u.equal #42l (get_third [| #0l; #1l; #42l |]))
+
+  let _ =  assert (Stdlib__Int64_u.equal #42L (get_third [| #0L; #1L; #42L |]))
+end
+
+[%%expect{|
+Line 9, characters 60-63:
+9 |   let _ =  assert (Stdlib__Int64_u.equal #42L (get_third [| #0L; #1L; #42L |]))
+                                                                ^^^
+Error: This expression has type int64# but an expression was expected of type
+         ('a : bits32)
+       The layout of int64# is bits64, because
+         it is the primitive bits64 type int64#.
+       But the layout of int64# must be a sublayout of bits32, because
+         of the definition of get_third at lines 2-5, characters 16-23.
+|}]
+
+module M6_2 = struct
+  (* sort var in exp *)
+
+  external[@layout_poly] get : ('a : any). 'a array -> int -> 'a = "%array_safe_get"
+
+  let arr = [||]
+
+  let f1 idx : float# = get arr idx
+  let f2 idx : int32# = get arr idx
+end
+
+[%%expect{|
+Line 7, characters 24-35:
+7 |   let f2 idx : int32# = get arr idx
+                            ^^^^^^^^^^^
+Error: This expression has type ('a : float64)
+       but an expression was expected of type int32#
+       The layout of int32# is bits32, because
+         it is the primitive bits32 type int32#.
+       But the layout of int32# must be a sublayout of float64, because
+         of the definition of arr at line 4, characters 12-16.
+|}]
