@@ -37,7 +37,9 @@ module type S = sig
   val iter : (element_t -> unit) -> t -> unit
   val iteri : (int -> element_t -> unit) -> t -> unit
   val map : (element_t -> element_t) -> t -> t
+  val map_inplace : (element_t -> element_t) -> t -> unit
   val mapi : (int -> element_t -> element_t) -> t -> t
+  val mapi_inplace : (int -> element_t -> element_t) -> t -> unit
   val fold_left : ('a -> element_t -> 'a) -> 'a -> t -> 'a
   val fold_right : (element_t -> 'a -> 'a) -> t -> 'a -> 'a
   val iter2 : (element_t -> element_t -> unit) -> t -> t -> unit
@@ -47,6 +49,10 @@ module type S = sig
   val exists : (element_t -> bool) -> t -> bool
   val exists2 : (element_t -> element_t -> bool) -> t -> t -> bool
   val mem : element_t -> t -> bool
+  val find_opt : (element_t -> bool) -> t -> element_t option
+  val find_index : (element_t-> bool) -> t -> int option
+  val find_map : (element_t -> 'a option) -> t -> 'a option
+  val find_mapi : (int -> element_t -> 'a option) -> t -> 'a option
   val sort : (element_t -> element_t -> int) -> t -> unit
   val stable_sort : (element_t -> element_t -> int) -> t -> unit
   val fast_sort : (element_t -> element_t -> int) -> t -> unit
@@ -118,9 +124,6 @@ end) : S with type t = Arg.M.t
 
 
   let to_list t = fold_right (fun f l -> (to_boxed f)::l) t []
-  (* let res = ref [] in
-   * iter (fun f -> res := (to_boxed f) :: !res);
-   * List.rev res *)
 
   let of_list l =
     let len = List.length l in
@@ -138,7 +141,9 @@ end) : S with type t = Arg.M.t
   let iter f t = iter (fun v -> f (to_boxed v)) t
   let iteri f t = iteri (fun i v -> f i (to_boxed v)) t
   let map f t = map (fun v -> of_boxed (f (to_boxed v))) t
+  let map_inplace f t = map_inplace (fun v -> of_boxed (f (to_boxed v))) t
   let mapi f t = mapi (fun i v -> of_boxed (f i (to_boxed v))) t
+  let mapi_inplace f t = mapi_inplace (fun i v -> of_boxed (f i (to_boxed v))) t
   let fold_left f acc t = fold_left (fun acc v -> f acc (to_boxed v)) acc t
   let fold_right f t acc = fold_right (fun v acc -> f (to_boxed v) acc) t acc
 
@@ -147,6 +152,15 @@ end) : S with type t = Arg.M.t
   let for_all f t = for_all (fun v -> f (to_boxed v)) t
   let exists f t = exists (fun v -> f (to_boxed v)) t
   let mem v t = mem (of_boxed v) t
+
+  let find_index f t = find_index (fun v -> f (to_boxed v)) t
+  let find_opt f t =
+    match find_index f t with
+    | None -> None
+    | Some idx -> Some (get t idx)
+  let find_map f t = find_map (fun v -> f (to_boxed v)) t
+  let find_mapi f t = find_mapi (fun i v -> f i (to_boxed v)) t
+
   let sort f t = sort (fun a b -> f (to_boxed a) (to_boxed b)) t
   let stable_sort f t = stable_sort (fun a b -> f (to_boxed a) (to_boxed b)) t
   let fast_sort f t = fast_sort (fun a b -> f (to_boxed a) (to_boxed b)) t
@@ -610,6 +624,61 @@ module Test (A : S) : sig end = struct
   in
   List.iter check [I.max_val; I.min_val; (I.of_int (-1)); (I.of_int 0)];
 
+  (* [find_opt], test result and order of evaluation *)
+  let a = A.init 777 I.of_int in
+  let r = ref (I.of_int 0) in
+  let f x =
+    assert (x = !r);
+    r := I.add x (I.of_int 1);
+    false
+  in
+  assert (Option.is_none (A.find_opt f a));
+  let f x = assert (x = (I.of_int 0)); true in
+  assert (Option.is_some (A.find_opt f a));
+
+  (* [find_index], test result and order of evaluation *)
+  let a = A.init 777 I.of_int in
+  let r = ref (I.of_int 0) in
+  let f x =
+    assert (x = !r);
+    r := I.add x (I.of_int 1);
+    false
+  in
+  assert (Option.is_none (A.find_index f a));
+  let f x = assert (x = (I.of_int 0)); true in
+  assert (Option.get (A.find_index f a) = 0);
+
+  (* [find_map], test result and order of evaluation *)
+  let a = A.init 777 I.of_int in
+  let r = ref (I.of_int 0) in
+  let f x =
+    assert (x = !r);
+    r := I.add x (I.of_int 1);
+    None
+  in
+  assert (Option.is_none (A.find_map f a));
+  let f x = assert (x = (I.of_int 0)); Some "abc" in
+  assert (Option.get (A.find_map f a) = "abc");
+
+  (* [find_mapi], test result and order of evaluation *)
+  let a = A.init 777 I.of_int in
+  let r = ref (I.of_int 0) in
+  let r_i = ref 0 in
+  let f i x =
+    assert (i = !r_i);
+    assert (x = !r);
+    r_i := !r_i + 1;
+    r := I.add x (I.of_int 1);
+    None
+  in
+  assert (Option.is_none (A.find_mapi f a));
+  let f i x =
+    assert (i = 0);
+    assert (x = (I.of_int 0));
+    Some "abc"
+  in
+  assert (Option.get (A.find_mapi f a) = "abc");
+
   (* [sort] [fast_sort] [stable_sort] *)
   let check_sort sort cmp a =
     let rec check_sorted a i =
@@ -794,6 +863,20 @@ module Test (A : S) : sig end = struct
   in
   let l = [(I.of_int 0); (I.of_int 1); (I.of_int -4); I.max_val; I.min_val; 3141592(I.of_int 6)] in
   test_structured_io (A.of_list l); *)
+
+  (* map_inplace *)
+  let a = A.init 4 (fun i -> I.of_int (i + 1)) in
+  A.map_inplace (fun x -> I.mul x (I.of_int 2)) a;
+  let got = A.map_to_array Fun.id a in
+  let expected = [|I.of_int 2; I.of_int 4; I.of_int 6; I.of_int 8|] in
+  assert (Array.for_all2 ( = ) got expected);
+
+  (* mapi_inplace *)
+  let a = A.init 4 (fun i -> I.of_int (i + 1)) in
+  A.mapi_inplace (fun i x -> I.(add (add (of_int 1) (of_int i)) x)) a;
+  let got = A.map_to_array Fun.id a in
+  let expected = [|I.of_int 2; I.of_int 4; I.of_int 6; I.of_int 8|] in
+  assert (Array.for_all2 ( = ) got expected);
 
   (* make_matrix *)
   check_inval (A.make_matrix (-1) 1) (I.of_int 1);

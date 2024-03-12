@@ -34,7 +34,9 @@ module type S = sig
   val iter : (float -> unit) -> t -> unit
   val iteri : (int -> float -> unit) -> t -> unit
   val map : (float -> float) -> t -> t
+  val map_inplace : (float -> float) -> t -> unit
   val mapi : (int -> float -> float) -> t -> t
+  val mapi_inplace : (int -> float -> float) -> t -> unit
   val fold_left : ('a -> float -> 'a) -> 'a -> t -> 'a
   val fold_right : (float -> 'a -> 'a) -> t -> 'a -> 'a
   val iter2 : (float -> float -> unit) -> t -> t -> unit
@@ -43,6 +45,10 @@ module type S = sig
   val exists : (float -> bool) -> t -> bool
   val mem : float -> t -> bool
   val mem_ieee : float -> t -> bool
+  val find_opt : (float -> bool) -> t -> float option
+  val find_index : (float-> bool) -> t -> int option
+  val find_map : (float -> 'a option) -> t -> 'a option
+  val find_mapi : (int -> float -> 'a option) -> t -> 'a option
   val sort : (float -> float -> int) -> t -> unit
   val stable_sort : (float -> float -> int) -> t -> unit
   val fast_sort : (float -> float -> int) -> t -> unit
@@ -124,9 +130,6 @@ module Test_float_u_array : S = struct
 
   let create l = make l (of_float 0.0)
   let to_list t = fold_right (fun f l -> (to_float f)::l) t []
-  (* let res = ref [] in
-   * iter (fun f -> res := (Float_u.to_float f) :: !res);
-   * List.rev res *)
 
   let of_list l =
     let len = List.length l in
@@ -143,7 +146,9 @@ module Test_float_u_array : S = struct
   let iter f t = iter (fun v -> f (to_float v)) t
   let iteri f t = iteri (fun i v -> f i (to_float v)) t
   let map f t = map (fun v -> of_float (f (to_float v))) t
+  let map_inplace f t = map_inplace (fun v -> of_float (f (to_float v))) t
   let mapi f t = mapi (fun i v -> of_float (f i (to_float v))) t
+  let mapi_inplace f t = mapi_inplace (fun i v -> of_float (f i (to_float v))) t
   let fold_left f acc t = fold_left (fun acc v -> f acc (to_float v)) acc t
   let fold_right f t acc = fold_right (fun v acc -> f (to_float v) acc) t acc
 
@@ -153,6 +158,15 @@ module Test_float_u_array : S = struct
   let exists f t = exists (fun v -> f (to_float v)) t
   let mem v t = mem (of_float v) t
   let mem_ieee goal t = exists (fun v -> v = goal) t
+
+  let find_index f t = find_index (fun v -> f (to_float v)) t
+  let find_opt f t =
+    match find_index f t with
+    | None -> None
+    | Some idx -> Some (get t idx)
+  let find_map f t = find_map (fun v -> f (to_float v)) t
+  let find_mapi f t = find_mapi (fun i v -> f i (to_float v)) t
+
   let sort f t = sort (fun a b -> f (to_float a) (to_float b)) t
   let stable_sort f t = stable_sort (fun a b -> f (to_float a) (to_float b)) t
   let fast_sort f t = fast_sort (fun a b -> f (to_float a) (to_float b)) t
@@ -631,6 +645,61 @@ module Test (A : S) : sig end = struct
   A.set a 0 nan;
   assert (not (A.mem_ieee nan a));
 
+  (* [find_opt], test result and order of evaluation *)
+  let a = A.init 777 Float.of_int in
+  let r = ref 0.0 in
+  let f x =
+    assert (x = !r);
+    r := x +. 1.0;
+    false
+  in
+  assert (Option.is_none (A.find_opt f a));
+  let f x = assert (x = 0.0); true in
+  assert (Option.is_some (A.find_opt f a));
+
+  (* [find_index], test result and order of evaluation *)
+  let a = A.init 777 Float.of_int in
+  let r = ref 0.0 in
+  let f x =
+    assert (x = !r);
+    r := x +. 1.0;
+    false
+  in
+  assert (Option.is_none (A.find_index f a));
+  let f x = assert (x = 0.0); true in
+  assert (Option.get (A.find_index f a) = 0);
+
+  (* [find_map], test result and order of evaluation *)
+  let a = A.init 777 Float.of_int in
+  let r = ref 0.0 in
+  let f x =
+    assert (x = !r);
+    r := x +. 1.0;
+    None
+  in
+  assert (Option.is_none (A.find_map f a));
+  let f x = assert (x = 0.0); Some "abc" in
+  assert (Option.get (A.find_map f a) = "abc");
+
+  (* [find_mapi], test result and order of evaluation *)
+  let a = A.init 777 Float.of_int in
+  let r = ref 0.0 in
+  let r_i = ref 0 in
+  let f i x =
+    assert (i = !r_i);
+    assert (x = !r);
+    r_i := !r_i + 1;
+    r := x +. 1.0;
+    None
+  in
+  assert (Option.is_none (A.find_mapi f a));
+  let f i x =
+    assert (i = 0);
+    assert (x = 0.0);
+    Some "abc"
+  in
+  assert (Option.get (A.find_mapi f a) = "abc");
+
   (* [sort] [fast_sort] [stable_sort] *)
   let check_sort sort cmp a =
     let rec check_sorted a i =
@@ -818,6 +887,19 @@ module Test (A : S) : sig end = struct
   let l = [0.; 0.25; -4.; 3.14159265; nan; infinity; neg_infinity; neg_zero] in
   test_structured_io (A.of_list l);
 
+  (* map_inplace *)
+  let a = A.init 4 (fun i -> Float.of_int (i + 1)) in
+  A.map_inplace (fun x -> 2. *. x) a;
+  let got = A.map_to_array Fun.id a in
+  let expected = [|2.; 4.; 6.; 8.|] in
+  assert (Array.for_all2 Float.equal got expected);
+
+  (* mapi_inplace *)
+  let a = A.init 4 (fun i -> Float.of_int (i + 1)) in
+  A.mapi_inplace (fun i x -> 1. +. (Float.of_int i) +. x) a;
+  let got = A.map_to_array Fun.id a in
+  let expected = [|2.; 4.; 6.; 8.|] in
+  assert (Array.for_all2 Float.equal got expected)
 end
 
 module T3 = Test (Test_float_u_array)

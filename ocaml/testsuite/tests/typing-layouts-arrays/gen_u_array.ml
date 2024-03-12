@@ -156,10 +156,20 @@ val map : (element_arg -> element_arg) -> t -> t
    and builds an array with the results returned by [f]:
    [[| f a.(0); f a.(1); ...; f a.(length a - 1) |]]. *)
 
+val map_inplace : (element_arg -> element_arg) -> t -> unit
+(** [map_inplace f a] applies function [f] to all elements of [a],
+    and updates their values in place.
+    @since 5.1 *)
+
 val mapi : (int -> element_arg -> element_arg) -> t -> t
 (** Same as {!map}, but the
    function is applied to the index of the element as first argument,
    and the element itself as second argument. *)
+
+val mapi_inplace : (int -> element_arg -> element_arg) -> t -> unit
+(** Same as {!map_inplace}, but the function is applied to the index of the
+    element as first argument, and the element itself as second argument.
+    @since 5.1 *)
 
 val fold_left : ('a -> element_arg -> 'a) -> 'a -> t -> 'a
 (** [fold_left f init a] computes
@@ -237,14 +247,30 @@ val mem : element_arg -> t -> bool
  *     the predicate [f], or [None] if there is no value that satisfies [f] in the
  *     array [a].
  *
- *     @since 4.13.0 *)
- *
- * val find_map : (element_arg -> 'b option) -> t -> 'b option
- * (** [find_map f a] applies [f] to the elements of [a] in order, and returns the
- *     first result of the form [Some v], or [None] if none exist.
- *
  *     @since 4.13.0 *) *)
 (* CR layouts v5: Unboxed values can't be in option yet *)
+
+val find_index : (element_arg -> bool) -> t -> int option
+(** [find_index f a] returns [Some i], where [i] is the index of the first
+    element of the array [a] that satisfies [f x], if there is such an
+    element.
+
+    It returns [None] if there is no such element.
+
+    @since 5.1 *)
+
+val find_map : (element_arg -> 'b option) -> t -> 'b option
+(** [find_map f a] applies [f] to the elements of [a] in order, and returns the
+    first result of the form [Some v], or [None] if none exist.
+
+    @since 4.13 *)
+
+val find_mapi : (int -> element_arg -> 'b option) -> t -> 'b option
+(** Same as [find_map], but the predicate is applied to the index of
+   the element as first argument (counting from 0), and the element
+   itself as second argument.
+
+   @since 5.1 *)
 
 (** {1 Arrays of pairs} *)
 
@@ -440,6 +466,16 @@ let map f a =
     r
   end
 
+let map_inplace f a =
+  for i = 0 to length a - 1 do
+    unsafe_set a i (f (unsafe_get a i))
+  done
+
+let mapi_inplace f a =
+  for i = 0 to length a - 1 do
+    unsafe_set a i (f i (unsafe_get a i))
+  done
+
 let map2 f a b =
   let la = length a in
   let lb = length b in
@@ -580,17 +616,6 @@ let mem x a =
  *   in
  *   loop 0
  *
- * let find_map f a =
- *   let n = length a in
- *   let rec loop i =
- *     if i = n then None
- *     else
- *       match f (unsafe_get a i) with
- *       | None -> loop (succ i)
- *       | Some _ as r -> r
- *   in
- *   loop 0
- *
  * let split x =
  *   if x = (empty ()) then (empty ()), (empty ())
  *   else begin
@@ -618,6 +643,36 @@ let mem x a =
  *     done;
  *     x
  *   end *)
+
+ let find_index p a =
+  let n = length a in
+  let rec loop i =
+    if i = n then None
+    else if p (unsafe_get a i) then Some i
+    else loop (succ i) in
+  loop 0
+
+let find_map f a =
+  let n = length a in
+  let rec loop i =
+    if i = n then None
+    else
+      match f (unsafe_get a i) with
+      | None -> loop (succ i)
+      | Some _ as r -> r
+  in
+  loop 0
+
+let find_mapi f a =
+  let n = length a in
+  let rec loop i =
+    if i = n then None
+    else
+      match f i (unsafe_get a i) with
+      | None -> loop (succ i)
+      | Some _ as r -> r
+  in
+  loop 0
 
 exception Bottom of int
 let sort cmp a =

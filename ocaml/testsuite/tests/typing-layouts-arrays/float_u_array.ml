@@ -147,6 +147,12 @@ let map f a =
     r
   end
 
+(* duplicated from array.ml *)
+let map_inplace f a =
+  for i = 0 to length a - 1 do
+    unsafe_set a i (f (unsafe_get a i))
+  done
+
 let map2 f a b =
   let la = length a in
   let lb = length b in
@@ -174,6 +180,12 @@ let mapi f a =
     done;
     r
   end
+
+(* duplicated from array.ml *)
+let mapi_inplace f a =
+  for i = 0 to length a - 1 do
+    unsafe_set a i (f i (unsafe_get a i))
+  done
 
 (* CR layouts: Uncommment functions below when we can have unboxed
    things in lists and other types. *)
@@ -294,17 +306,6 @@ let mem x a =
  *   in
  *   loop 0
  *
- * let find_map f a =
- *   let n = length a in
- *   let rec loop i =
- *     if i = n then None
- *     else
- *       match f (unsafe_get a i) with
- *       | None -> loop (succ i)
- *       | Some _ as r -> r
- *   in
- *   loop 0
- *
  * let split x =
  *   if x = (empty ()) then (empty ()), (empty ())
  *   else begin
@@ -332,6 +333,39 @@ let mem x a =
  *     done;
  *     x
  *   end *)
+
+(* duplicated from array.ml *)
+let find_index p a =
+  let n = length a in
+  let rec loop i =
+    if i = n then None
+    else if p (unsafe_get a i) then Some i
+    else loop (i + 1) in
+  loop 0
+
+(* duplicated from array.ml *)
+let find_map f a =
+  let n = length a in
+  let rec loop i =
+    if i = n then None
+    else
+      match f (unsafe_get a i) with
+      | None -> loop (i + 1)
+      | Some _ as r -> r
+  in
+  loop 0
+
+(* duplicated from array.ml *)
+let find_mapi f a =
+  let n = length a in
+  let rec loop i =
+    if i = n then None
+    else
+      match f i (unsafe_get a i) with
+      | None -> loop (i + 1)
+      | Some _ as r -> r
+  in
+  loop 0
 
 exception Bottom of int
 let sort cmp a =
