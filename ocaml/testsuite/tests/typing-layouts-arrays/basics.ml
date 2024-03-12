@@ -221,15 +221,15 @@ module M6_1 = struct
 end
 
 [%%expect{|
-Line 9, characters 60-63:
-9 |   let _ =  assert (Stdlib__Int64_u.equal #42L (get_third [| #0L; #1L; #42L |]))
-                                                                ^^^
+Line 11, characters 60-63:
+11 |   let _ =  assert (Stdlib__Int64_u.equal #42L (get_third [| #0L; #1L; #42L |]))
+                                                                 ^^^
 Error: This expression has type int64# but an expression was expected of type
          ('a : bits32)
        The layout of int64# is bits64, because
          it is the primitive bits64 type int64#.
        But the layout of int64# must be a sublayout of bits32, because
-         of the definition of get_third at lines 2-5, characters 16-23.
+         of the definition of get_third at lines 4-7, characters 16-23.
 |}]
 
 module M6_2 = struct
@@ -244,13 +244,13 @@ module M6_2 = struct
 end
 
 [%%expect{|
-Line 7, characters 24-35:
-7 |   let f2 idx : int32# = get arr idx
+Line 9, characters 24-35:
+9 |   let f2 idx : int32# = get arr idx
                             ^^^^^^^^^^^
 Error: This expression has type ('a : float64)
        but an expression was expected of type int32#
        The layout of int32# is bits32, because
          it is the primitive bits32 type int32#.
        But the layout of int32# must be a sublayout of float64, because
-         of the definition of arr at line 4, characters 12-16.
+         of the definition of arr at line 6, characters 12-16.
 |}]
