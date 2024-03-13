@@ -163,7 +163,7 @@ let classify env loc ty sort : classification =
   | Void ->
     raise (Error (loc, Unsupported_sort Void))
 
-let array_type_kind_gen ?elt_sort env loc ty =
+let array_type_kind ~elt_sort env loc ty =
   match scrape_poly env ty with
   | Tconstr(p, [elt_ty], _)
     when Path.same p Predef.path_array || Path.same p Predef.path_iarray ->
@@ -187,14 +187,15 @@ let array_type_kind_gen ?elt_sort env loc ty =
       (* This can happen with e.g. Obj.field *)
       Pgenarray
 
-let array_type_kind env loc ty =
-  array_type_kind_gen ?elt_sort:None env loc ty
-
 let array_kind exp elt_sort =
-  array_type_kind_gen ~elt_sort exp.exp_env exp.exp_loc exp.exp_type
+  array_type_kind
+    ~elt_sort:(Some elt_sort)
+    exp.exp_env exp.exp_loc exp.exp_type
 
 let array_pattern_kind pat elt_sort =
-  array_type_kind_gen ~elt_sort pat.pat_env pat.pat_loc pat.pat_type
+  array_type_kind
+    ~elt_sort:(Some elt_sort)
+    pat.pat_env pat.pat_loc pat.pat_type
 
 let bigarray_decode_type env ty tbl dfl =
   match scrape env ty with
@@ -383,7 +384,9 @@ let rec value_kind env ~loc ~visited ~depth ~num_nodes_visited ty
   | Tconstr(p, _, _)
     when (Path.same p Predef.path_array
           || Path.same p Predef.path_floatarray) ->
-    num_nodes_visited, Parrayval (array_type_kind env loc ty)
+    (* CR layouts: [~elt_sort:None] here is bad for performance. To
+       fix it, we need a place to store the sort on a [Tconstr]. *)
+    num_nodes_visited, Parrayval (array_type_kind ~elt_sort:None env loc ty)
   | Tconstr(p, _, _) -> begin
       let decl =
         try Env.find_type p env with Not_found -> raise Missing_cmi_fallback

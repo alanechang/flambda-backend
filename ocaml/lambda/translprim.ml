@@ -791,32 +791,44 @@ let specialize_primitive env loc ty ~has_constant_constructor prim =
       Some (Primitive (Pfield (n, is_int, mut), arity))
   | Primitive (Parraylength t, arity), [p] -> begin
       let loc = to_location loc in
-      let array_type = glb_array_type loc t (array_type_kind env loc p) in
+      (* CR layouts: [~elt_sort:None] here is not ideal and should be
+         fixed. To do that, we will need more checking of primitives
+         in the front end. *)
+      let array_type =
+        glb_array_type loc t (array_type_kind ~elt_sort:None env loc p)
+      in
       if t = array_type then None
       else Some (Primitive (Parraylength array_type, arity))
     end
   | Primitive (Parrayrefu rt, arity), p1 :: _ -> begin
       let loc = to_location loc in
-      let array_ref_type = glb_array_ref_type loc rt (array_type_kind env loc p1)
+      let array_ref_type =
+        glb_array_ref_type loc rt (array_type_kind ~elt_sort:None env loc p1)
       in
       if rt = array_ref_type then None
       else Some (Primitive (Parrayrefu array_ref_type, arity))
     end
   | Primitive (Parraysetu st, arity), p1 :: _ -> begin
       let loc = to_location loc in
-      let array_set_type = glb_array_set_type loc st (array_type_kind env loc p1) in
+      let array_set_type =
+        glb_array_set_type loc st (array_type_kind ~elt_sort:None env loc p1)
+      in
       if st = array_set_type then None
       else Some (Primitive (Parraysetu array_set_type, arity))
     end
   | Primitive (Parrayrefs rt, arity), p1 :: _ -> begin
       let loc = to_location loc in
-      let array_ref_type = glb_array_ref_type loc rt (array_type_kind env loc p1) in
+      let array_ref_type =
+        glb_array_ref_type loc rt (array_type_kind ~elt_sort:None env loc p1)
+      in
       if rt = array_ref_type then None
       else Some (Primitive (Parrayrefs array_ref_type, arity))
     end
   | Primitive (Parraysets st, arity), p1 :: _ -> begin
       let loc = to_location loc in
-      let array_set_type = glb_array_set_type loc st (array_type_kind env loc p1) in
+      let array_set_type =
+        glb_array_set_type loc st (array_type_kind ~elt_sort:None env loc p1)
+      in
       if st = array_set_type then None
       else Some (Primitive (Parraysets array_set_type, arity))
     end
